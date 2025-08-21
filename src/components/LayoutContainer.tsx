@@ -5,9 +5,9 @@ import InspectorPanel from "@/components/InspectorPanel";
 function LayoutContainer({ children }: { children: JSX.Element }): JSX.Element {
   return (
     <>
-      {/* <LayersPanel /> */}
+      <LayersPanel />
       {children}
-      {/* <InspectorPanel /> */}
+      <InspectorPanel />
     </>
   );
 }
