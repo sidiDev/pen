@@ -14,6 +14,7 @@ import {
 import Tooltip from "@/components/ui/tooltip-custom";
 import canvasStore from "@/utils/CanvasStore";
 import { observer } from "mobx-react-lite";
+import * as fabric from "fabric";
 
 // Define layer types
 interface Layer {
@@ -137,10 +138,8 @@ function LayerItem({ layer, depth = 0 }: { layer: Layer; depth?: number }) {
   );
 }
 
-const LayersPanel = observer(() => {
+const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
   const [isPagesExpanded, setIsPagesExpanded] = useState(true);
-
-  console.log(canvasStore.selectedToolbarAction);
 
   return (
     <div className="fixed z-10 h-full w-70 bg-zinc-900 border-r border-zinc-800">

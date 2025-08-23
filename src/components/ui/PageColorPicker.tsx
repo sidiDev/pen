@@ -8,17 +8,33 @@ import { PopoverClose } from "@radix-ui/react-popover";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { X } from "lucide-react";
 import { hsvaToRgba, hexToHsva } from "@uiw/color-convert";
+import { observer } from "mobx-react-lite";
+import canvasStore from "@/utils/CanvasStore";
 
-function PageColorPicker() {
-  const [color, setColor] = useState("#F5F5F5");
-  const [alpha, setAlpha] = useState(1);
+const PageColorPicker = observer(() => {
+  const [newColor, setNewColor] = useState(
+    canvasStore.currentPage.backgroundColor.hex
+  );
+
+  const [color, setColor] = useState(
+    canvasStore.currentPage.backgroundColor.hex
+  );
+  const [alpha, setAlpha] = useState(
+    canvasStore.currentPage.backgroundColor.alpha
+  );
 
   useEffect(() => {
-    const hsva = hexToHsva(color);
-    const rgba = hsvaToRgba(hsva);
-    document.body.style.backgroundColor = `rgba(${Math.round(
-      rgba.r
-    )}, ${Math.round(rgba.g)}, ${Math.round(rgba.b)}, ${alpha})`;
+    if (color) {
+      const hsva = hexToHsva(color);
+
+      const rgba = hsvaToRgba(hsva);
+      const bgColor = `rgba(${Math.round(rgba.r)}, ${Math.round(
+        rgba.g
+      )}, ${Math.round(rgba.b)}, ${alpha})`;
+      document.body.style.backgroundColor = bgColor;
+      canvasStore.setCurrentPageBgColor(color, bgColor, alpha);
+      setNewColor(color);
+    }
   }, [color, alpha]);
 
   return (
@@ -62,23 +78,27 @@ function PageColorPicker() {
         </Popover>
         <input
           type="text"
-          value={color.toUpperCase().replace("#", "")}
+          value={newColor.toUpperCase().replace("#", "")}
           onChange={(e) => {
             const newValue = e.target.value
               .replace(/[^0-9A-Fa-f]/g, "")
               .substring(0, 6);
             if (newValue.length === 6) {
-              setColor(`#${newValue}`);
+              setNewColor(`#${newValue}`);
             } else {
-              setColor(`#${newValue}`);
+              setNewColor(`#${newValue}`);
             }
           }}
           onBlur={(e) => {
             const value = e.target.value;
-            if (value.length === 6) {
-              setColor(`#${value}`);
-            } else if (value.length === 0) {
-              setColor("#000000");
+            const newValue = value.replace(/[^0-9A-Fa-f]/g, "").substring(0, 6);
+
+            if (newValue.length === 6) {
+              setColor(`#${newValue}`);
+              setNewColor(`#${newValue}`);
+            } else {
+              setColor(canvasStore.currentPage.backgroundColor.hex);
+              setNewColor(canvasStore.currentPage.backgroundColor.hex);
             }
           }}
           className="text-xs border-r h-full border-zinc-700 flex-1 bg-transparent outline-none text-zinc-200 focus:ring-0 px-1"
@@ -107,6 +127,6 @@ function PageColorPicker() {
       </div>
     </button>
   );
-}
+});
 
 export default PageColorPicker;

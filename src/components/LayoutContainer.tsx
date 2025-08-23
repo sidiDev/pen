@@ -1,11 +1,18 @@
 import { JSX } from "react";
 import LayersPanel from "@/components/LayersPanel";
 import InspectorPanel from "@/components/InspectorPanel";
+import * as fabric from "fabric";
 
-function LayoutContainer({ children }: { children: JSX.Element }): JSX.Element {
+function LayoutContainer({
+  children,
+  canvas,
+}: {
+  children: JSX.Element;
+  canvas: fabric.Canvas | null;
+}): JSX.Element {
   return (
     <>
-      <LayersPanel />
+      <LayersPanel canvas={canvas} />
       {children}
       <InspectorPanel />
     </>
