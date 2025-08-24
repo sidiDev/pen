@@ -15,14 +15,14 @@ import Tooltip from "@/components/ui/tooltip-custom";
 import canvasStore from "@/utils/CanvasStore";
 import { observer } from "mobx-react-lite";
 import * as fabric from "fabric";
+import { toJS } from "mobx";
 
 // Define layer types
 interface Layer {
   id: string;
   name: string;
   type: "frame" | "text" | "image" | "group";
-  children?: Layer[];
-  content?: string;
+  children: any[];
 }
 
 const toolbarActions: {
@@ -48,7 +48,7 @@ const toolbarActions: {
 ];
 
 // Sample data structure
-const sampleLayers: Layer[] = [
+const sampleLayers = [
   {
     id: "1",
     name: "01 1",
@@ -86,6 +86,8 @@ const sampleLayers: Layer[] = [
 function LayerItem({ layer, depth = 0 }: { layer: Layer; depth?: number }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = layer.children && layer.children.length > 0;
+
+  console.log(layer);
 
   const getIcon = (type: Layer["type"]) => {
     switch (type) {
@@ -125,7 +127,9 @@ function LayerItem({ layer, depth = 0 }: { layer: Layer; depth?: number }) {
         )}
         {!hasChildren && <div className="w--5" />}
         {getIcon(layer.type)}
-        <span className="text-zinc-300 text-xs truncate">{layer.name}</span>
+        <span className="text-zinc-300 text-xs truncate">
+          {layer.type == "text" ? layer.name || "Text" : layer.name}
+        </span>
       </div>
       {hasChildren && isExpanded && (
         <div className="pt-2 space-y-2">
@@ -142,7 +146,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
   const [isPagesExpanded, setIsPagesExpanded] = useState(true);
 
   return (
-    <div className="fixed z-10 h-full w-70 bg-zinc-900 border-r border-zinc-800">
+    <div className="fixed z-10 h-full w-68 bg-zinc-900 border-r border-zinc-800">
       <div className="flex h-full">
         <div className="flex-1">
           {/* Pages Section */}
@@ -181,7 +185,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
 
           {/* Layers Tree */}
           <div className="flex-1 overflow-y-auto px-2 space-y-2">
-            {sampleLayers.map((layer) => (
+            {toJS(canvasStore.currentLayers).map((layer) => (
               <LayerItem key={layer.id} layer={layer} />
             ))}
           </div>

@@ -30,8 +30,29 @@ class CanvasStore {
     this.selectedToolbarActionState = action;
   }
 
+  setUpdateObject({
+    id,
+    prop,
+    value,
+  }: {
+    id: string;
+    prop: string;
+    value: any;
+  }) {
+    this.currentPage.objects.find((object) => object.id === id)[prop] = value;
+  }
+
   get selectedToolbarAction() {
     return this.selectedToolbarActionState;
+  }
+
+  get currentLayers() {
+    return this.currentPage.objects.map((item) => ({
+      id: item?.id,
+      name: item?.name || item?.text,
+      type: item?.type,
+      children: [],
+    }));
   }
 
   get currentPage() {

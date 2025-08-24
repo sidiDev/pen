@@ -32,10 +32,32 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         width: 1000,
         height: 1000,
         selection: true,
-        selectionColor: "rgba(0, 120, 215, 0.2)",
+        selectionColor: "rgba(0, 120, 215, 0.1)",
         selectionLineWidth: 1,
         selectionBorderColor: "#60a5fa",
+        freeDrawingCursor: "crosshair",
       });
+
+      canvas.on("text:changed", (e) => {
+        // e.target.width = e.target.calcTextWidth() + 20;
+        // console.log(e.target.measureLine(0).width);
+
+        console.log("text:changed", e);
+      });
+
+      canvas.on("selection:created", (selectedEl) => {
+        selectedEl.selected.forEach((el) => {
+          console.log("selected", el);
+        });
+
+        // selectedEl.e?.target?.addEventListener("mousemove", (e) => {
+        //   console.log("selection offsetX", selectedEl?.e?.offsetX);
+        //   console.log("selection", selectedEl?.e);
+        //   console.log("mousemove offsetX", e.offsetX);
+        // });
+      });
+
+      // canvas.setZoom(0.09);
 
       DEV_MODE && (window.canvas = canvas);
 
