@@ -291,25 +291,13 @@ export const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
               setCurrentFormat(value as typeof currentFormat)
             }
           >
-            <SelectTrigger
-              size="sm"
-              className="w-[80px] py-0 text-xs bg-neutral-700 border border-neutral-600 rounded-md text-neutral-200 focus:outline-none"
-            >
-              <SelectValue
-                placeholder="Hex"
-                className="text-xs text-neutral-200 placeholder:text-neutral-200"
-              />
+            <SelectTrigger size="sm" className="w-[80px]">
+              <SelectValue placeholder="Hex" />
             </SelectTrigger>
-            <SelectContent className="bg-neutral-800 border border-neutral-700">
-              <SelectItem value="hex" className="text-neutral-200">
-                Hex
-              </SelectItem>
-              <SelectItem value="rgb" className="text-neutral-200">
-                RGB
-              </SelectItem>
-              <SelectItem value="hsl" className="text-neutral-200">
-                HSL
-              </SelectItem>
+            <SelectContent>
+              <SelectItem value="hex">Hex</SelectItem>
+              <SelectItem value="rgb">RGB</SelectItem>
+              <SelectItem value="hsl">HSL</SelectItem>
             </SelectContent>
           </Select>
 
@@ -317,7 +305,7 @@ export const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
             type="text"
             value={getFormattedValue()}
             onChange={handleInputChange}
-            className="flex-1 px-2 py-1.5 text-xs bg-neutral-700 border border-neutral-600 rounded-md text-neutral-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+            className="flex-1 px-2 py-1.5 h-7 text-xs bg-neutral-700/50 border border-neutral-700 rounded-md text-neutral-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
           />
         </div>
       </div>

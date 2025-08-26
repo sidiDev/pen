@@ -1,4 +1,5 @@
 import { makeAutoObservable } from "mobx";
+import * as fabric from "fabric";
 // import { observer } from "mobx-react-lite";
 
 class CanvasStore {
@@ -16,6 +17,7 @@ class CanvasStore {
   ];
   currentPageNumber = 0;
   selectedLayers = [] as { type: string; id: string }[];
+  hoveredLayer = null as fabric.FabricObject | null;
   selectedToolbarActionState: "cursor" | "text" | "frame" | "rectangle" =
     "cursor";
 
@@ -69,22 +71,27 @@ class CanvasStore {
     }
   }
 
-  setUpdateObject({
-    id,
-    prop,
-    value,
-  }: {
-    id: string;
-    prop: string;
-    value: any;
-  }) {
-    this.currentPage.objects.find((object) => object.id === id)[prop] = value;
-  }
-
   setUnselectLayer(ids: string[]) {
     this.selectedLayers = this.selectedLayers.filter(
       (item) => !ids.includes(item.id)
     );
+  }
+
+  setUpdateObject({ id, updates }: { id: string; updates: Object }) {
+    this.currentPage.objects = this.currentPage.objects.map((item) => {
+      if (item.id == id) {
+        return { ...item, ...updates };
+      }
+
+      if (item.children && item.children.length > 0) {
+        this.setUpdateObject({ id, updates });
+      }
+      return item;
+    });
+  }
+
+  setHoveredLayer(layer: fabric.FabricObject) {
+    this.hoveredLayer = layer;
   }
 
   getLayerById(id: string) {

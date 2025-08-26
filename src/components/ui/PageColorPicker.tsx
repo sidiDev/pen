@@ -39,7 +39,7 @@ const PageColorPicker = observer(() => {
 
   return (
     <button className="w-full text-left">
-      <div className="flex items-center gap-2 px-2 h-7 bg-neutral-700 border border-neutral-600 rounded-lg hover:border-neutral-500 transition-all duration-200 group">
+      <div className="flex items-center gap-2 px-2 h-7 bg-neutral-700/50 border border-neutral-700 rounded-lg hover:border-neutral-500 transition-all duration-200 group">
         <Popover>
           <PopoverTrigger asChild>
             <div className="relative size-4 rounded overflow-hidden flex-shrink-0">
@@ -119,7 +119,7 @@ const PageColorPicker = observer(() => {
                 );
                 setAlpha(newValue / 100);
               }}
-              className="text-center bg-transparent border-none outline-none text-neutral-200 focus:ring-0 px-1"
+              className="text-center bg-transparent border-none outline-none text-neutral-200 focus:ring-0"
             />
             <span className="text-xs">%</span>
           </div>

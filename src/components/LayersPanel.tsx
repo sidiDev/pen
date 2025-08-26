@@ -98,11 +98,13 @@ const LayerItem = observer(
     layer,
     depth = 0,
     onSelect,
+    onHover,
     idx,
   }: {
     layer: Layer;
     depth?: number;
     onSelect: (id: string) => void;
+    onHover: (id: string | null) => void;
     idx: number;
   }) => {
     const [isExpanded, setIsExpanded] = useState(true);
@@ -128,9 +130,11 @@ const LayerItem = observer(
         <div
           id={`layer-element-${idx}`}
           data-selected={canvasStore.getLayerById(layer.id).length > 0}
-          className="layer-element flex justify-start items-center gap-2 py-1.5 hover:bg-neutral-700/50 group rounded-md data-[selected=true]:bg-neutral-700"
+          className="layer-element flex justify-start items-center gap-2 py-1.5 hover:bg-neutral-700/30 group rounded-md data-[selected=true]:bg-neutral-700/50"
           // style={{ paddingLeft: `${16 + depth * 16}px` }}
           onClick={() => onSelect(layer.id)}
+          onMouseEnter={() => onHover(layer.id)}
+          onMouseLeave={() => onHover(null)}
         >
           {hasChildren && (
             <button
@@ -158,6 +162,7 @@ const LayerItem = observer(
             {layer.children!.map((child, idx) => (
               <LayerItem
                 onSelect={onSelect}
+                onHover={onHover}
                 key={child.id}
                 layer={child}
                 depth={depth + 1}
@@ -224,6 +229,11 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
     console.log("Current selected layers:", canvasStore.selectedLayers);
   }
 
+  function hoverLayer(id: string | null) {
+    const layer: any = canvas?.getObjects().find((el) => (el as any).id === id);
+    canvasStore.setHoveredLayer(layer);
+  }
+
   console.log("selectedLayers", toJS(canvasStore.selectedLayers));
   useEffect(() => {
     window.addEventListener("keydown", (e) => {
@@ -235,7 +245,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
   }, []);
 
   useEffect(() => {
-    // Handle radius in layers elements
+    // Handle radius in selected layers elements
     const layerEls = document.querySelectorAll(".layer-element");
     if (canvasStore.selectedLayers.length > 0) {
       layerEls.forEach((el, idx) => {
@@ -266,7 +276,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
   return (
     <div className="fixed z-10 h-full w-68 bg-neutral-800 border-r border-neutral-700">
       <div className="flex h-full">
-        <div className="flex-1">
+        <div className="flex-1 overflow-auto">
           {/* Pages Section */}
           <div className="flex-1 py-3">
             <div>
@@ -289,7 +299,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
             </div>
             {isPagesExpanded && (
               <div className="px-2 pt-2">
-                <Button className="text-xs font-normal bg-neutral-700 hover:bg-neutral-700 w-full block text-left pl-8">
+                <Button className="text-xs font-normal bg-neutral-700/50 hover:bg-neutral-700/50 w-full block text-left pl-8">
                   Page 1
                 </Button>
               </div>
@@ -306,6 +316,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
             {toJS(canvasStore.currentLayers).map((layer, idx) => (
               <LayerItem
                 onSelect={selectLayer}
+                onHover={hoverLayer}
                 key={layer.id}
                 layer={layer}
                 idx={idx}

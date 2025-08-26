@@ -1,5 +1,6 @@
 import CanvasStore from "@/utils/CanvasStore";
 import * as fabric from "fabric";
+import { toJS } from "mobx";
 import React, { RefObject, useEffect, useRef } from "react";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
@@ -40,13 +41,16 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       });
 
       canvas.on("text:changed", (e) => {
-        // e.target.width = e.target.calcTextWidth() + 20;
-        // console.log(e.target.measureLine(0).width);
-
-        console.log("text:changed", e);
+        setTimeout(() => {
+          CanvasStore.setUpdateObject({
+            id: (e.target as any).id,
+            updates: { text: e.target.text },
+          });
+        }, 300);
       });
 
       canvas.on("selection:created", (selectedEl) => {
+        CanvasStore.setHoveredLayer(null as any);
         const selectedLayers = selectedEl.selected.forEach((el: any) => {
           CanvasStore.setSelectedLayer({
             id: el.id,
@@ -67,6 +71,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         console.log("selection:updated", e);
         const unselectedIds = e.deselected.map((item: any) => item.id);
         CanvasStore.setUnselectLayer(unselectedIds);
+        CanvasStore.setHoveredLayer(null as any);
         const selectedLayers = e.selected.forEach((el: any) => {
           CanvasStore.setSelectedLayer({
             id: el.id,
@@ -78,6 +83,16 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       canvas.on("selection:cleared", (e) => {
         const unselectedIds = e.deselected.map((item: any) => item.id);
         CanvasStore.setUnselectLayer(unselectedIds);
+      });
+
+      canvas.on("mouse:over", (e) => {
+        if (e.target && CanvasStore.selectedLayers.length === 0) {
+          CanvasStore.setHoveredLayer(e.target);
+        }
+      });
+
+      canvas.on("mouse:out", (e) => {
+        CanvasStore.setHoveredLayer(null as any);
       });
 
       // canvas.setZoom(0.09);

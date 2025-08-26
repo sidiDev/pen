@@ -88,11 +88,11 @@ const App = observer(() => {
       borderScaleFactor: 1.5,
       borderOpacityWhenMoving: 0,
       opacity: textObject.opacity,
-      padding: 1,
       id,
       itemType: "text",
     });
 
+    text.set("editingBorderColor", "#3b82f6");
     canvas?.setActiveObject(text);
     text.enterEditing();
 
@@ -107,6 +107,34 @@ const App = observer(() => {
     canvas?.add(text);
     canvasStore.setSelectedToolbarAction("cursor");
   }
+
+  useEffect(() => {
+    if (canvasStore.hoveredLayer) {
+      removeHoverElement();
+      const hoverElement = document.createElement("div");
+      hoverElement.id = "hover-element";
+      hoverElement.style.width =
+        canvasStore.hoveredLayer.getScaledWidth() + "px";
+      hoverElement.style.height =
+        canvasStore.hoveredLayer.getScaledHeight() + "px";
+      hoverElement.style.border = "2px solid #60a5fa";
+      hoverElement.style.position = "absolute";
+      hoverElement.style.zIndex = "-1000";
+
+      hoverElement.style.top = canvasStore.hoveredLayer.top + "px";
+      hoverElement.style.left = canvasStore.hoveredLayer.left + "px";
+
+      document.body.appendChild(hoverElement);
+    } else {
+      removeHoverElement();
+    }
+    function removeHoverElement() {
+      const hoverElement = document.getElementById("hover-element");
+      if (hoverElement) {
+        hoverElement.remove();
+      }
+    }
+  }, [canvasStore.hoveredLayer]);
 
   return (
     <LayoutContainer canvas={canvas}>
