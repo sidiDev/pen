@@ -10,12 +10,22 @@ import {
   Hash,
   ChevronRight,
   ChevronDown,
+  LayoutGrid,
 } from "lucide-react";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarTrigger,
+} from "@/components/ui/menubar";
 import Tooltip from "@/components/ui/tooltip-custom";
 import canvasStore from "@/utils/CanvasStore";
 import { observer } from "mobx-react-lite";
 import * as fabric from "fabric";
 import { toJS } from "mobx";
+import { useNavigate } from "react-router";
 
 // Define layer types
 interface Layer {
@@ -164,6 +174,7 @@ const LayerItem = observer(
 const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
   const [isPagesExpanded, setIsPagesExpanded] = useState(true);
   const [keyDownName, setKeyDownName] = useState("");
+  const navigate = useNavigate();
 
   function selectLayer(id: string) {
     const layer: any = canvas?.getObjects().find((el) => (el as any).id === id);
@@ -257,7 +268,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
       <div className="flex h-full">
         <div className="flex-1">
           {/* Pages Section */}
-          <div className="flex-1 py-3.5">
+          <div className="flex-1 py-3">
             <div>
               <button
                 onClick={(e) => {
@@ -304,23 +315,43 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
         </div>
 
         {/* Actions Panel */}
-        <div className="flex flex-col justify-center items-center h-full border-l border-neutral-700 p-1 space-y-1">
-          {toolbarActions.map((action) => (
-            <Tooltip key={action.id} content={action.id} side="right">
-              <Button
-                onClick={() => {
-                  canvasStore.setSelectedToolbarAction(action.id);
-                }}
-                className={`bg-neutral-800 hover:bg-neutral-700 size-9 text-neutral-300 ${
-                  canvasStore.selectedToolbarAction === action.id
-                    ? "bg-neutral-700"
-                    : ""
-                }`}
+        <div className="flex flex-col items-center h-full border-l border-neutral-700 py-3">
+          <Menubar className="bg-neutral-800 border-none">
+            <MenubarMenu>
+              <MenubarTrigger className="text-neutral-300 focus:text-neutral-300 bg-neutral-800 focus:bg-neutral-800 border-none ring-0 ring-offset-0 hover:bg-neutral-700 data-[state=open]:bg-neutral-700 data-[state=open]:text-neutral-300">
+                <LayoutGrid className="size-5" />
+              </MenubarTrigger>
+              <MenubarContent
+                sideOffset={4}
+                className="bg-neutral-800 border-neutral-700 ml-1"
               >
-                {action.icon}
-              </Button>
-            </Tooltip>
-          ))}
+                <MenubarItem onClick={() => navigate("/")}>
+                  Back to files
+                </MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem>Place image</MenubarItem>
+                <MenubarItem>Share</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
+          </Menubar>
+          <div className="flex-1 justify-self-center flex flex-col justify-center items-center p-1 space-y-1">
+            {toolbarActions.map((action) => (
+              <Tooltip key={action.id} content={action.id} side="right">
+                <Button
+                  onClick={() => {
+                    canvasStore.setSelectedToolbarAction(action.id);
+                  }}
+                  className={`bg-neutral-800 hover:bg-neutral-700 size-9 text-neutral-300 ${
+                    canvasStore.selectedToolbarAction === action.id
+                      ? "bg-neutral-700"
+                      : ""
+                  }`}
+                >
+                  {action.icon}
+                </Button>
+              </Tooltip>
+            ))}
+          </div>
         </div>
       </div>
     </div>
