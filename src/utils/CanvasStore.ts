@@ -15,6 +15,7 @@ class CanvasStore {
     },
   ];
   currentPageNumber = 0;
+  selectedLayers = [] as { type: string; id: string }[];
   selectedToolbarActionState: "cursor" | "text" | "frame" | "rectangle" =
     "cursor";
 
@@ -30,6 +31,44 @@ class CanvasStore {
     this.selectedToolbarActionState = action;
   }
 
+  setEmptySelectedLayers() {
+    this.selectedLayers = [];
+  }
+
+  clearAllSelections() {
+    this.selectedLayers = [];
+  }
+
+  setSelectedLayer(layer: { type: string; id: string }) {
+    const isLayerExist = this.selectedLayers.some(
+      (item) => item.id === layer.id
+    );
+
+    console.log(isLayerExist);
+
+    if (!isLayerExist) {
+      this.selectedLayers.push(layer);
+    }
+  }
+
+  setSelectedLayers(layers: { type: string; id: string }[]) {
+    this.selectedLayers = layers;
+  }
+
+  toggleSelectedLayer(layer: { type: string; id: string }) {
+    const existingIndex = this.selectedLayers.findIndex(
+      (item) => item.id === layer.id
+    );
+
+    if (existingIndex >= 0) {
+      // Remove if already selected
+      this.selectedLayers.splice(existingIndex, 1);
+    } else {
+      // Add if not selected
+      this.selectedLayers.push(layer);
+    }
+  }
+
   setUpdateObject({
     id,
     prop,
@@ -42,8 +81,30 @@ class CanvasStore {
     this.currentPage.objects.find((object) => object.id === id)[prop] = value;
   }
 
+  setUnselectLayer(ids: string[]) {
+    this.selectedLayers = this.selectedLayers.filter(
+      (item) => !ids.includes(item.id)
+    );
+  }
+
+  getLayerById(id: string) {
+    return this.selectedLayers.filter((item) => item.id == id);
+  }
+
   get selectedToolbarAction() {
     return this.selectedToolbarActionState;
+  }
+
+  get selectedLayersCount() {
+    return this.selectedLayers.length;
+  }
+
+  get hasSelectedLayers() {
+    return this.selectedLayers.length > 0;
+  }
+
+  isLayerSelected(layerId: string): boolean {
+    return this.selectedLayers.some((layer) => layer.id === layerId);
   }
 
   get currentLayers() {

@@ -1,3 +1,4 @@
+import CanvasStore from "@/utils/CanvasStore";
 import * as fabric from "fabric";
 import React, { RefObject, useEffect, useRef } from "react";
 
@@ -46,15 +47,37 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       });
 
       canvas.on("selection:created", (selectedEl) => {
-        selectedEl.selected.forEach((el) => {
-          console.log("selected", el);
+        const selectedLayers = selectedEl.selected.forEach((el: any) => {
+          CanvasStore.setSelectedLayer({
+            id: el.id,
+            type: el.itemType,
+          });
         });
+
+        // console.log(selectedLayers);
 
         // selectedEl.e?.target?.addEventListener("mousemove", (e) => {
         //   console.log("selection offsetX", selectedEl?.e?.offsetX);
         //   console.log("selection", selectedEl?.e);
         //   console.log("mousemove offsetX", e.offsetX);
         // });
+      });
+
+      canvas.on("selection:updated", (e) => {
+        console.log("selection:updated", e);
+        const unselectedIds = e.deselected.map((item: any) => item.id);
+        CanvasStore.setUnselectLayer(unselectedIds);
+        const selectedLayers = e.selected.forEach((el: any) => {
+          CanvasStore.setSelectedLayer({
+            id: el.id,
+            type: el.itemType,
+          });
+        });
+      });
+
+      canvas.on("selection:cleared", (e) => {
+        const unselectedIds = e.deselected.map((item: any) => item.id);
+        CanvasStore.setUnselectLayer(unselectedIds);
       });
 
       // canvas.setZoom(0.09);

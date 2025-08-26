@@ -58,7 +58,7 @@ function ToggleGroupItem({
           variant: context.variant || variant,
           size: context.size || size,
         }),
-        "min-w-0 flex-1 shrink-0 shadow-none focus:z-10 focus-visible:z-10 rounded-md data-[state=on]:bg-zinc-800 data-[state=on]:text-zinc-300",
+        "min-w-0 flex-1 shrink-0 shadow-none focus:z-10 focus-visible:z-10 rounded-md data-[state=on]:bg-neutral-800 data-[state=on]:text-neutral-300",
         className
       )}
       {...props}

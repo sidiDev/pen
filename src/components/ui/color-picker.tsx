@@ -85,7 +85,7 @@ const ColorSaturation = React.forwardRef<HTMLDivElement, ColorSaturationProps>(
         <div className="absolute inset-0 bg-gradient-to-r from-white to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
         <div
-          className="absolute w-4 h-4 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          className="absolute w-4 h-4 -tranneutral-x-1/2 -tranneutral-y-1/2 pointer-events-none"
           style={{
             left: `${thumbLeft}%`,
             top: `${thumbTop}%`,
@@ -172,7 +172,7 @@ const ColorSlider = React.forwardRef<HTMLDivElement, ColorSliderProps>(
           <div className="absolute inset-0 bg-checkerboard" />
         )}
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
+          className="absolute top-1/2 -tranneutral-y-1/2 -tranneutral-x-1/2 pointer-events-none"
           style={{ left: `${thumbPosition}%` }}
         >
           <div className="w-4 h-8 rounded-sm border-2 border-white shadow-lg bg-transparent" />
@@ -293,21 +293,21 @@ export const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
           >
             <SelectTrigger
               size="sm"
-              className="w-[80px] py-0 text-xs bg-zinc-800 border border-zinc-700 rounded-md text-zinc-200 focus:outline-none"
+              className="w-[80px] py-0 text-xs bg-neutral-700 border border-neutral-600 rounded-md text-neutral-200 focus:outline-none"
             >
               <SelectValue
                 placeholder="Hex"
-                className="text-xs text-zinc-200 placeholder:text-zinc-200"
+                className="text-xs text-neutral-200 placeholder:text-neutral-200"
               />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-800 border border-zinc-700">
-              <SelectItem value="hex" className="text-zinc-200">
+            <SelectContent className="bg-neutral-800 border border-neutral-700">
+              <SelectItem value="hex" className="text-neutral-200">
                 Hex
               </SelectItem>
-              <SelectItem value="rgb" className="text-zinc-200">
+              <SelectItem value="rgb" className="text-neutral-200">
                 RGB
               </SelectItem>
-              <SelectItem value="hsl" className="text-zinc-200">
+              <SelectItem value="hsl" className="text-neutral-200">
                 HSL
               </SelectItem>
             </SelectContent>
@@ -317,7 +317,7 @@ export const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
             type="text"
             value={getFormattedValue()}
             onChange={handleInputChange}
-            className="flex-1 px-2 py-1.5 text-xs bg-zinc-800 border border-zinc-700 rounded-md text-zinc-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+            className="flex-1 px-2 py-1.5 text-xs bg-neutral-700 border border-neutral-600 rounded-md text-neutral-200 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
           />
         </div>
       </div>
@@ -350,9 +350,9 @@ export const ColorField = React.forwardRef<HTMLDivElement, ColorFieldProps>(
 
     return (
       <div ref={ref} className={cn("flex items-center gap-2", className)}>
-        {label && <span className="text-xs text-zinc-400">{label}</span>}
+        {label && <span className="text-xs text-neutral-400">{label}</span>}
 
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-md hover:border-zinc-600 transition-colors cursor-pointer">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800 border border-neutral-700 rounded-md hover:border-neutral-600 transition-colors cursor-pointer">
           <div className="relative w-4 h-4 rounded overflow-hidden">
             <div className="absolute inset-0 bg-checkerboard" />
             <div
@@ -361,11 +361,11 @@ export const ColorField = React.forwardRef<HTMLDivElement, ColorFieldProps>(
             />
           </div>
 
-          <span className="text-xs text-zinc-200 font-mono">
+          <span className="text-xs text-neutral-200 font-mono">
             {value.toUpperCase().replace("#", "")}
           </span>
 
-          <div className="flex items-center gap-1 text-xs text-zinc-400">
+          <div className="flex items-center gap-1 text-xs text-neutral-400">
             <span className="font-mono">{Math.round(alpha * 100)}</span>
             <span>%</span>
           </div>
@@ -376,7 +376,7 @@ export const ColorField = React.forwardRef<HTMLDivElement, ColorFieldProps>(
                 e.stopPropagation();
                 setIsVisible(!isVisible);
               }}
-              className="text-zinc-400 hover:text-zinc-200 transition-colors"
+              className="text-neutral-400 hover:text-neutral-200 transition-colors"
             >
               {isVisible ? (
                 <Eye className="w-3.5 h-3.5" />

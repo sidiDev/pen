@@ -90,6 +90,7 @@ const App = observer(() => {
       opacity: textObject.opacity,
       padding: 1,
       id,
+      itemType: "text",
     });
 
     canvas?.setActiveObject(text);

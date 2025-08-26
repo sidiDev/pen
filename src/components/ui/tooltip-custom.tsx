@@ -18,7 +18,7 @@ function Tooltip({
   return (
     <TooltipPrimitive disableHoverableContent={true} delayDuration={700}>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent className="bg-zinc-800 text-zinc-300" side={side}>
+      <TooltipContent className="bg-neutral-800 text-neutral-300" side={side}>
         {content}
       </TooltipContent>
     </TooltipPrimitive>

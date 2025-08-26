@@ -39,7 +39,7 @@ const PageColorPicker = observer(() => {
 
   return (
     <button className="w-full text-left">
-      <div className="flex items-center gap-2 px-2 h-7 bg-zinc-800 border border-zinc-700 rounded-lg hover:border-zinc-600 transition-all duration-200 group">
+      <div className="flex items-center gap-2 px-2 h-7 bg-neutral-700 border border-neutral-600 rounded-lg hover:border-neutral-500 transition-all duration-200 group">
         <Popover>
           <PopoverTrigger asChild>
             <div className="relative size-4 rounded overflow-hidden flex-shrink-0">
@@ -57,12 +57,12 @@ const PageColorPicker = observer(() => {
             align="start"
             sideOffset={40}
             side="left"
-            className="w-70 p-4 bg-zinc-900 border-zinc-700 shadow-2xl"
+            className="w-70 p-4 bg-neutral-800 border-neutral-700 shadow-2xl"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs text-zinc-200">Custom</h3>
-                <PopoverClose className="text-zinc-500">
+                <h3 className="text-xs text-neutral-200">Custom</h3>
+                <PopoverClose className="text-neutral-500">
                   <X size={16} />
                 </PopoverClose>
               </div>
@@ -101,12 +101,12 @@ const PageColorPicker = observer(() => {
               setNewColor(canvasStore.currentPage.backgroundColor.hex);
             }
           }}
-          className="text-xs border-r h-full border-zinc-700 flex-1 bg-transparent outline-none text-zinc-200 focus:ring-0 px-1"
+          className="text-xs border-r h-full border-neutral-700 flex-1 bg-transparent outline-none text-neutral-200 focus:ring-0 px-1"
           placeholder="000000"
         />
 
         <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5 text-sm text-zinc-400">
+          <div className="flex items-center gap-0.5 text-sm text-neutral-400">
             <input
               type="number"
               min="0"
@@ -119,7 +119,7 @@ const PageColorPicker = observer(() => {
                 );
                 setAlpha(newValue / 100);
               }}
-              className="text-center bg-transparent border-none outline-none text-zinc-200 focus:ring-0 px-1"
+              className="text-center bg-transparent border-none outline-none text-neutral-200 focus:ring-0 px-1"
             />
             <span className="text-xs">%</span>
           </div>
