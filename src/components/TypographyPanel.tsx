@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -16,12 +16,100 @@ import {
   ArrowDownToLine,
 } from "lucide-react";
 import { IconLineHeight, IconletterSpacing } from "./icons";
+import { PanelSettings } from "./InspectorPanel";
+import * as fabric from "fabric";
+import canvasStore from "@/utils/CanvasStore";
 
 interface TypographyPanelProps {
   className?: string;
+  panelSettings: PanelSettings;
+  setPanelSettings: (settings: PanelSettings) => void;
+  isMultiSelect: boolean;
+  selectedLayers: string[];
+  canvas: fabric.Canvas | null;
 }
 
-export function TypographyPanel({ className }: TypographyPanelProps) {
+export function TypographyPanel({
+  className,
+  panelSettings,
+  setPanelSettings,
+  isMultiSelect,
+  selectedLayers,
+  canvas,
+}: TypographyPanelProps) {
+  const [typographySettings, setTypographySettings] = useState<{
+    fontFamily: string;
+    fontWeight: number;
+    fontSize: number;
+    lineHeight: number;
+    letterSpacing: number;
+    textAlign: string;
+  }>({
+    fontFamily: panelSettings.fontFamily,
+    fontWeight: panelSettings.fontWeight,
+    fontSize: panelSettings.fontSize,
+    lineHeight: panelSettings.lineHeight,
+    letterSpacing: panelSettings.letterSpacing,
+    textAlign: panelSettings.textAlign,
+  });
+
+  useEffect(() => {
+    setTypographySettings(panelSettings);
+    console.log(panelSettings);
+  }, [panelSettings]);
+
+  function handleBlur(value: string, property: string) {
+    const isNumber = value.match(/^\d+$/) !== null;
+
+    if (value === "" || (value.match(/^\d+$/) === null && isMultiSelect)) {
+      setTypographySettings({
+        ...typographySettings,
+        [property]: "Mixed",
+      });
+      setPanelSettings({
+        ...panelSettings,
+        [property]: "Mixed",
+      });
+    } else if (!isMultiSelect && value.match(/^\d+$/) !== null) {
+      console.log("Blur", value);
+      const newValue = isNumber ? Number(value) : value;
+      setTypographySettings({
+        ...typographySettings,
+        [property]: newValue,
+      });
+      setPanelSettings({
+        ...panelSettings,
+        [property]: newValue,
+      });
+
+      if (isMultiSelect) {
+        selectedLayers.forEach((layerId) => {
+          canvasStore.setUpdateObject({
+            id: layerId,
+            updates: { [property]: newValue },
+          });
+        });
+      } else {
+        console.log(selectedLayers[0]);
+
+        const layer = canvas
+          ?.getObjects()
+          .find((obj) => (obj as any).id === selectedLayers[0]);
+        if (layer) {
+          layer.set({ [property]: newValue });
+          layer.setCoords();
+          canvas?.renderAll();
+          console.log(newValue);
+        }
+
+        canvasStore.setUpdateObject({
+          id: selectedLayers[0],
+          updates: { [property]: newValue },
+        });
+      }
+    }
+  }
+
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
@@ -64,10 +152,24 @@ export function TypographyPanel({ className }: TypographyPanelProps) {
         <div className="relative flex-1">
           <input
             type="number"
-            defaultValue="14.86"
+            value={typographySettings.fontSize}
             className="w-full h-7 px-3 py-2 bg-neutral-700/50 border border-neutral-700 rounded-md text-neutral-200 text-xs focus:outline-none hover:border-neutral-500 focus:border-neutral-500 transition-all duration-200"
             step="0.01"
             min="0"
+            onChange={(e) => {
+              setTypographySettings({
+                ...typographySettings,
+                fontSize: Number(e.target.value),
+              });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleBlur(typographySettings.fontSize.toString(), "fontSize");
+              }
+            }}
+            onBlur={(e) => {
+              handleBlur(e.target.value, "fontSize");
+            }}
           />
         </div>
       </div>
@@ -79,7 +181,7 @@ export function TypographyPanel({ className }: TypographyPanelProps) {
           <div className="mt-0.5 relative">
             <input
               type="number"
-              defaultValue="19"
+              value={typographySettings.lineHeight}
               className="w-full h-7 px-3 py-2 pl-8 bg-neutral-700/50 border border-neutral-700 rounded-md text-neutral-200 text-xs focus:outline-none hover:border-neutral-500 focus:border-neutral-500 transition-all duration-200"
             />
             <IconLineHeight className="w-4 h-4 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -92,7 +194,7 @@ export function TypographyPanel({ className }: TypographyPanelProps) {
           <div className="mt-0.5 relative">
             <input
               type="number"
-              defaultValue="0"
+              value={typographySettings.letterSpacing}
               className="w-full h-7 px-3 py-2 pl-8 bg-neutral-700/50 border border-neutral-700 rounded-md text-neutral-200 text-xs focus:outline-none hover:border-neutral-500 focus:border-neutral-500 transition-all duration-200"
             />
             <IconletterSpacing className="w-4 h-4 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -109,7 +211,7 @@ export function TypographyPanel({ className }: TypographyPanelProps) {
             <Button
               variant="outline"
               size="icon"
-              className="size-6 flex-1 bg-neutral-700/50 bg-zinc-800 border-none shadow-none hover:bg-neutral-700/50 text-neutral-200 hover:text-neutral-100"
+              className="size-6 flex-1 bg-zinc-800 border-none shadow-none hover:bg-neutral-800 text-neutral-200 hover:text-neutral-100"
             >
               <AlignLeft className="w-4 h-4" />
             </Button>

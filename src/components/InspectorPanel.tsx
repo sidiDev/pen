@@ -1,22 +1,173 @@
-import { JSX } from "react";
-import PageColorPicker from "./ui/PageColorPicker";
+import { JSX, useEffect, useState } from "react";
+import ColorPickerHandler from "./ui/ColorPickerHandler";
 import { TypographyPanel } from "@/components/TypographyPanel";
+import { LayoutPanel } from "./LayoutPanel";
+import { AppearancePanel } from "./AppearancePanel";
+import { FillPanel } from "./FillPanel";
+import { observer } from "mobx-react-lite";
+import canvasStore from "@/utils/CanvasStore";
+import * as fabric from "fabric";
 
-function InspectorPanel(): JSX.Element {
-  return (
-    <div className="fixed right-0 top-0 z-10 h-full w-68 bg-neutral-800 border-l border-neutral-700">
-      <div className="p-4 space-y-6">
-        <div className="space-y-4">
-          <h1 className="text-xs font-medium text-neutral-200">Page</h1>
-          <div className="space-y-2">
-            <PageColorPicker />
-          </div>
-        </div>
-
-        <TypographyPanel />
-      </div>
-    </div>
-  );
+export interface PanelSettings {
+  alignment: string;
+  lineHeight: number;
+  letterSpacing: number;
+  fontSize: number;
+  fontWeight: number;
+  fontFamily: string;
+  textAlign: string;
+  fill: string | fabric.TFiller | null;
+  opacity: number;
+  x: number | "Mixed";
+  y: number | "Mixed";
+  width: number | "Mixed";
+  height: number | "Mixed";
+  charSpacing: number;
 }
+
+const InspectorPanel = observer(
+  ({ canvas }: { canvas: fabric.Canvas | null }): JSX.Element => {
+    const initialPanelSettings: PanelSettings = {
+      alignment: "start",
+      lineHeight: 0,
+      letterSpacing: 0,
+      fontSize: 0,
+      fontWeight: 0,
+      fontFamily: "",
+      textAlign: "",
+      fill: "",
+      opacity: 0,
+      x: "Mixed",
+      y: "Mixed",
+      width: "Mixed",
+      height: "Mixed",
+      charSpacing: 0,
+    };
+    const [panelSettings, setPanelSettings] =
+      useState<PanelSettings>(initialPanelSettings);
+
+    const handlePageBgColorChange = (
+      color: string,
+      rgba: string,
+      alpha: number
+    ) => {
+      document.body.style.backgroundColor = rgba;
+      canvasStore.setCurrentPageBgColor(color, rgba, alpha);
+    };
+
+    useEffect(() => {
+      if (canvasStore.selectedLayersCount == 1) {
+        const selectedLayer = canvasStore.selectedLayers[0];
+        const layer = canvas
+          ?.getObjects()
+          .find((obj) => (obj as any).id === selectedLayer.id);
+        if (layer) {
+          setPanelSettings((data) => ({
+            ...data,
+            x: Math.round(layer.left),
+            y: Math.round(layer.top),
+            width: Math.round(layer.width),
+            height: Math.round(layer.height),
+            fill: layer.fill,
+            opacity: layer.opacity,
+            fontSize: (layer as any).fontSize,
+            fontWeight: (layer as any).fontWeight,
+            fontFamily: (layer as any).fontFamily,
+            textAlign: (layer as any).textAlign,
+            lineHeight: (layer as any).lineHeight,
+            charSpacing: (layer as any).charSpacing,
+          }));
+        }
+      } else if (canvasStore.selectedLayersCount > 1) {
+        setPanelSettings(initialPanelSettings);
+      }
+    }, [canvasStore.selectedLayersCount, canvasStore.selectedLayers]);
+
+    // useEffect(() => {
+    //   if (canvasStore.hasSelectedLayers) {
+    //     const ids = new Set(
+    //       canvasStore.selectedLayers.map((layer) => layer.id)
+    //     );
+    //     canvas?.getObjects().forEach((obj: any) => {
+    //       if (ids.has(obj.id)) {
+    //         console.log("obj", obj);
+    //       }
+    //     });
+    //   }
+    // }, [panelSettings, canvasStore.selectedLayers]);
+
+    const isImage = canvasStore.selectedLayers[0]?.type === "image";
+
+    return (
+      <div className="fixed right-0 top-0 z-10 h-full w-68 bg-neutral-800 border-l border-neutral-700">
+        <div className="p-4 space-y-6">
+          {!canvasStore.hasSelectedLayers ? (
+            <div className="space-y-4">
+              <h1 className="text-xs font-medium text-neutral-200">Page</h1>
+              <div className="space-y-2">
+                <ColorPickerHandler
+                  color={canvasStore.currentPage.backgroundColor.hex}
+                  alpha={canvasStore.currentPage.backgroundColor.alpha}
+                  onColorChange={handlePageBgColorChange}
+                  label="Fill"
+                  placeholder="000000"
+                  className="w-full"
+                  showAlpha={true}
+                  showLabel={true}
+                  showHexInput={true}
+                  showPercentage={true}
+                  popoverSide="left"
+                  popoverAlign="start"
+                  popoverClassName=" transform-y-20"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 divide-y divide-neutral-700 [&>div]:pb-3">
+              <LayoutPanel
+                isMultiSelect={canvasStore.selectedLayersCount > 1}
+                panelSettings={panelSettings}
+                setPanelSettings={setPanelSettings}
+                canvas={canvas}
+                selectedLayers={canvasStore.selectedLayers.map(
+                  (layer) => layer.id
+                )}
+                isImage={isImage}
+              />
+              {isImage && (
+                <AppearancePanel
+                  panelSettings={panelSettings}
+                  setPanelSettings={setPanelSettings}
+                  selectedLayers={canvasStore.selectedLayers.map(
+                    (layer) => layer.id
+                  )}
+                  isMultiSelect={canvasStore.selectedLayersCount > 1}
+                  canvas={canvas}
+                />
+              )}
+              {!isImage && (
+                <TypographyPanel
+                  panelSettings={panelSettings}
+                  setPanelSettings={setPanelSettings}
+                  selectedLayers={canvasStore.selectedLayers.map(
+                    (layer) => layer.id
+                  )}
+                  isMultiSelect={canvasStore.selectedLayersCount > 1}
+                  canvas={canvas}
+                />
+              )}
+              {!isImage && (
+                <FillPanel
+                  fill={panelSettings.fill as string}
+                  opacity={panelSettings.opacity as number}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+);
 
 export default InspectorPanel;

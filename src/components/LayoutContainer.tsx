@@ -14,7 +14,7 @@ function LayoutContainer({
     <>
       <LayersPanel canvas={canvas} />
       {children}
-      <InspectorPanel />
+      <InspectorPanel canvas={canvas} />
     </>
   );
 }

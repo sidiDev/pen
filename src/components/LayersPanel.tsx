@@ -26,6 +26,7 @@ import { observer } from "mobx-react-lite";
 import * as fabric from "fabric";
 import { toJS } from "mobx";
 import { useNavigate } from "react-router";
+import { ImagePicker } from "./ImagePicker";
 
 // Define layer types
 interface Layer {
@@ -36,7 +37,7 @@ interface Layer {
 }
 
 const toolbarActions: {
-  id: "cursor" | "text" | "frame" | "rectangle";
+  id: "cursor" | "text" | "frame" | "rectangle" | "image";
   icon: React.ReactNode;
 }[] = [
   {
@@ -113,15 +114,15 @@ const LayerItem = observer(
     const getIcon = (type: Layer["type"]) => {
       switch (type) {
         case "frame":
-          return <Hash className="size-3.5 text-neutral-400" />;
+          return <Hash className="flex-none size-3.5 text-neutral-400" />;
         case "text":
-          return <Type className="size-3.5 text-neutral-400" />;
+          return <Type className="flex-none size-3.5 text-neutral-400" />;
         case "image":
-          return <Image className="size-3.5 text-neutral-400" />;
+          return <Image className="flex-none size-3.5 text-neutral-400" />;
         case "group":
-          return <Frame className="size-3.5 text-neutral-400" />;
+          return <Frame className="flex-none size-3.5 text-neutral-400" />;
         default:
-          return <Frame className="size-3.5 text-neutral-400" />;
+          return <Frame className="flex-none size-3.5 text-neutral-400" />;
       }
     };
 
@@ -329,7 +330,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
         <div className="flex flex-col items-center h-full border-l border-neutral-700 py-3">
           <Menubar className="bg-neutral-800 border-none">
             <MenubarMenu>
-              <MenubarTrigger className="text-neutral-300 focus:text-neutral-300 bg-neutral-800 focus:bg-neutral-800 border-none ring-0 ring-offset-0 hover:bg-neutral-700 data-[state=open]:bg-neutral-700 data-[state=open]:text-neutral-300">
+              <MenubarTrigger className="size-8 text-neutral-300 focus:text-neutral-300 bg-neutral-800 focus:bg-neutral-800 border-none ring-0 ring-offset-0 hover:bg-neutral-700 data-[state=open]:bg-neutral-700 data-[state=open]:text-neutral-300">
                 <LayoutGrid className="size-5" />
               </MenubarTrigger>
               <MenubarContent
@@ -341,7 +342,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
                 </MenubarItem>
                 <MenubarSeparator />
                 <MenubarItem>Place image</MenubarItem>
-                <MenubarItem>Share</MenubarItem>
+                <MenubarItem>Copy link</MenubarItem>
               </MenubarContent>
             </MenubarMenu>
           </Menubar>
@@ -352,7 +353,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
                   onClick={() => {
                     canvasStore.setSelectedToolbarAction(action.id);
                   }}
-                  className={`bg-neutral-800 hover:bg-neutral-700 size-9 text-neutral-300 ${
+                  className={`bg-neutral-800 hover:bg-neutral-700 size-8 text-neutral-300 ${
                     canvasStore.selectedToolbarAction === action.id
                       ? "bg-neutral-700"
                       : ""
@@ -362,6 +363,13 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
                 </Button>
               </Tooltip>
             ))}
+            <ImagePicker
+              selected={canvasStore.selectedToolbarAction}
+              setImage={(image: { name: string; url: string | null }) => {
+                canvasStore.setSelectedToolbarAction("image");
+                canvasStore.setSelectedImage(image);
+              }}
+            />
           </div>
         </div>
       </div>

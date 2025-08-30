@@ -18,19 +18,33 @@ class CanvasStore {
   currentPageNumber = 0;
   selectedLayers = [] as { type: string; id: string }[];
   hoveredLayer = null as fabric.FabricObject | null;
-  selectedToolbarActionState: "cursor" | "text" | "frame" | "rectangle" =
-    "cursor";
+  selectedToolbarActionState:
+    | "cursor"
+    | "text"
+    | "frame"
+    | "rectangle"
+    | "image" = "cursor";
+  selectedImage = {
+    name: "" as string | null,
+    url: null as string | null,
+  };
 
   constructor() {
     makeAutoObservable(this);
   }
 
   addObject(object: any) {
-    this.currentPage.objects.push(object);
+    this.currentPage.objects.unshift(object);
   }
 
-  setSelectedToolbarAction(action: "cursor" | "text" | "frame" | "rectangle") {
+  setSelectedToolbarAction(
+    action: "cursor" | "text" | "frame" | "rectangle" | "image"
+  ) {
     this.selectedToolbarActionState = action;
+  }
+
+  setSelectedImage(image: { name: string; url: string | null }) {
+    this.selectedImage = image;
   }
 
   setEmptySelectedLayers() {

@@ -20,25 +20,26 @@ export interface CanvasProps
    * Reference to the HTML canvas element
    */
   canvasRef: RefObject<HTMLCanvasElement>;
-  defaultCursor: string;
 }
 
 export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
-  ({ onLoad, canvasRef, defaultCursor, ...props }, ref) => {
+  ({ onLoad, canvasRef, ...props }, ref) => {
     useEffect(() => {
       if (!canvasRef.current) {
         return;
       }
 
       const canvas = new fabric.Canvas(canvasRef.current, {
-        width: 1000,
-        height: 1000,
+        width: window.innerWidth,
+        height: window.innerHeight,
         selection: true,
         selectionColor: "rgba(0, 120, 215, 0.1)",
         selectionLineWidth: 1,
         selectionBorderColor: "#60a5fa",
         freeDrawingCursor: "crosshair",
       });
+
+      canvas.preserveObjectStacking = true;
 
       canvas.on("text:changed", (e) => {
         setTimeout(() => {
@@ -81,12 +82,16 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       });
 
       canvas.on("selection:cleared", (e) => {
-        const unselectedIds = e.deselected.map((item: any) => item.id);
-        CanvasStore.setUnselectLayer(unselectedIds);
+        setTimeout(() => {
+          console.log("selection:cleared", e);
+          const unselectedIds = e.deselected.map((item: any) => item.id);
+          CanvasStore.setUnselectLayer(unselectedIds);
+        }, 100);
       });
 
       canvas.on("mouse:over", (e) => {
         if (e.target && CanvasStore.selectedLayers.length === 0) {
+          console.log("mouse:over", e.target);
           CanvasStore.setHoveredLayer(e.target);
         }
       });
