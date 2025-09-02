@@ -142,7 +142,7 @@ export function ImagePicker({
       formData.append("filename", file.name);
       formData.append("type", file.type);
 
-      const response = await fetch("http://localhost:8787/upload-file", {
+      const response = await fetch("http://localhost:64374/upload-file", {
         method: "POST",
         body: formData,
       });
@@ -333,6 +333,9 @@ export function ImagePicker({
                     <div className="text-xs text-neutral-400">
                       Supports: JPG, PNG, GIF, WebP • Size limit: 10 MB
                     </div>
+                    <span className="text-sm text-neutral-50 font-medium">
+                      ⇧ ⌘ K
+                    </span>
                   </div>
                 )}
               </TabsContent>

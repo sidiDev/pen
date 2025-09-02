@@ -212,8 +212,14 @@ const App = observer(() => {
     const pointer = canvas?.getScenePoint(e.e);
     const id = uuidv4();
     const img = fabric.FabricImage.fromURL(imageUrl as string).then((img) => {
-      console.log(img);
-
+      const clipPath = new fabric.Rect({
+        width: img.width,
+        height: img.height,
+        rx: 0, // Border radius X
+        ry: 0, // Border radius Y
+        originX: "center",
+        originY: "center",
+      });
       img.set({
         left: (pointer?.x as number) - img.width / 2,
         top: (pointer?.y as number) - img.height / 2,
@@ -224,6 +230,8 @@ const App = observer(() => {
         cornerStrokeColor: "#3b82f6",
         cornerSize: 8,
         itemType: "image",
+        clipPath,
+        imageUrl,
         id,
       });
       img.setControlsVisibility({

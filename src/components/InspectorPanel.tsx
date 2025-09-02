@@ -7,6 +7,7 @@ import { FillPanel } from "./FillPanel";
 import { observer } from "mobx-react-lite";
 import canvasStore from "@/utils/CanvasStore";
 import * as fabric from "fabric";
+import ImageFill from "./ImageFill";
 
 export interface PanelSettings {
   alignment: string;
@@ -23,6 +24,12 @@ export interface PanelSettings {
   width: number | "Mixed";
   height: number | "Mixed";
   charSpacing: number;
+  borderRadius: {
+    r: number;
+    l: number;
+    t: number;
+    b: number;
+  };
 }
 
 const InspectorPanel = observer(
@@ -42,6 +49,12 @@ const InspectorPanel = observer(
       width: "Mixed",
       height: "Mixed",
       charSpacing: 0,
+      borderRadius: {
+        r: 0,
+        l: 0,
+        t: 0,
+        b: 0,
+      },
     };
     const [panelSettings, setPanelSettings] =
       useState<PanelSettings>(initialPanelSettings);
@@ -69,7 +82,7 @@ const InspectorPanel = observer(
             width: Math.round(layer.width),
             height: Math.round(layer.height),
             fill: layer.fill,
-            opacity: layer.opacity,
+            opacity: layer.opacity * 100,
             fontSize: (layer as any).fontSize,
             fontWeight: (layer as any).fontWeight,
             fontFamily: (layer as any).fontFamily,
@@ -160,6 +173,20 @@ const InspectorPanel = observer(
                 <FillPanel
                   fill={panelSettings.fill as string}
                   opacity={panelSettings.opacity as number}
+                />
+              )}
+              {isImage && (
+                <ImageFill
+                  imageUrl={
+                    (
+                      canvas
+                        ?.getObjects()
+                        .find(
+                          (obj: any) =>
+                            obj.id === canvasStore.selectedLayers[0].id
+                        ) as any
+                    ).imageUrl as string
+                  }
                 />
               )}
             </div>

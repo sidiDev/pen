@@ -23,10 +23,15 @@ export function AppearancePanel({
 }: AppearancePanelProps) {
   const [appearanceSettings, setAppearanceSettings] = useState<{
     opacity: number | "Mixed";
-    cornerRadius: number | "Mixed";
+    cornerRadius: {
+      r: number;
+      l: number;
+      t: number;
+      b: number;
+    };
   }>({
     opacity: panelSettings.opacity,
-    cornerRadius: "Mixed",
+    cornerRadius: panelSettings.borderRadius,
   });
 
   function handleBlur(value: string, property: "opacity" | "cornerRadius") {
@@ -62,7 +67,7 @@ export function AppearancePanel({
         const normalized = (numericValue as number) / 100;
         setPanelSettings({
           ...panelSettings,
-          opacity: normalized as number,
+          opacity: numericValue as number,
         });
       }
 
@@ -93,7 +98,7 @@ export function AppearancePanel({
 
         const updates: Record<string, any> =
           property === "opacity"
-            ? { opacity: (numericValue as number) / 100 }
+            ? { opacity: numericValue }
             : { rx: numericValue, ry: numericValue };
         canvasStore.setUpdateObject({ id: targetId, updates });
       }
@@ -101,30 +106,15 @@ export function AppearancePanel({
   }
 
   useEffect(() => {
+    console.log(panelSettings.opacity);
+
     // Sync opacity directly from panelSettings
     // Corner radius is read from the fabric object when possible
-    let cornerRadius: number | "Mixed" = "Mixed";
-    if (!isMultiSelect && selectedLayers.length === 1) {
-      const targetId = selectedLayers[0];
-      const layer = canvas
-        ?.getObjects()
-        .find((obj) => (obj as any).id === targetId) as any;
-      if (layer) {
-        const rx = (layer as any).rx ?? (layer as any).cornerRadius;
-        if (typeof rx === "number") cornerRadius = Math.round(rx);
-      }
-    }
-
-    const opacityDisplay =
-      typeof (panelSettings as any).opacity === "number"
-        ? Math.round(((panelSettings as any).opacity as number) * 100)
-        : ("Mixed" as any);
-
     setAppearanceSettings({
-      opacity: opacityDisplay as any,
-      cornerRadius,
+      opacity: panelSettings.opacity == 0 ? 100 : panelSettings.opacity,
+      cornerRadius: panelSettings.borderRadius,
     });
-  }, [panelSettings.opacity, isMultiSelect, selectedLayers.join(","), canvas]);
+  }, [panelSettings.opacity, panelSettings.borderRadius]);
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -161,7 +151,7 @@ export function AppearancePanel({
           <div className="mt-0.5 relative">
             <input
               type="text"
-              value={appearanceSettings.cornerRadius}
+              value={appearanceSettings.cornerRadius.r}
               onChange={(e) => {
                 setAppearanceSettings({
                   ...appearanceSettings,
