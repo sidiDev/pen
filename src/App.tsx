@@ -5,7 +5,6 @@ import { Canvas } from "@/components/Canvas";
 import * as fabric from "fabric";
 import { useRef, useCallback, useEffect, useState, RefObject } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { toJS } from "mobx";
 
 const App = observer(() => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -23,6 +22,146 @@ const App = observer(() => {
     },
     [canvasRef]
   );
+
+  const isDraggingRef = useRef(false);
+  const lastPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Wheel pan/zoom and space-drag pan
+  useEffect(() => {
+    if (!canvas) return;
+
+    const minZoom = 0.05;
+    const maxZoom = 8;
+    const WHEEL_ZOOM_EXP_BASE = 1.005;
+    const KB_ZOOM_STEP = 1.2;
+
+    function setZoomClamped(nextZoom: number) {
+      const z = Math.min(maxZoom, Math.max(minZoom, nextZoom));
+      canvasStore.setZoom(z);
+      return z;
+    }
+
+    const handleWheel = (opt: any) => {
+      const e = opt.e as WheelEvent;
+      const isZoomGesture = e.ctrlKey || e.metaKey;
+
+      if (isZoomGesture) {
+        const canvasRect = canvas.upperCanvasEl.getBoundingClientRect();
+        const pointer = new fabric.Point(
+          e.clientX - canvasRect.left,
+          e.clientY - canvasRect.top
+        );
+        const currentZoom = canvas.getZoom();
+        const zoomFactor = Math.pow(WHEEL_ZOOM_EXP_BASE, -e.deltaY);
+        const nextZoom = setZoomClamped(currentZoom * zoomFactor);
+        canvas.zoomToPoint(pointer, nextZoom);
+        canvas.requestRenderAll();
+      } else {
+        const delta = new fabric.Point(-e.deltaX, -e.deltaY);
+        canvas.relativePan(delta);
+        canvas.requestRenderAll();
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        canvasStore.setIsPanning(true);
+        canvas.setCursor("grab");
+        canvas.requestRenderAll();
+        e.preventDefault();
+      }
+
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key === "+" || e.key === "=") {
+          const center = new fabric.Point(canvas.width / 2, canvas.height / 2);
+          const nextZoom = setZoomClamped(canvas.getZoom() * KB_ZOOM_STEP);
+          canvas.zoomToPoint(center, nextZoom);
+          canvas.requestRenderAll();
+          e.preventDefault();
+        }
+        if (e.key === "-") {
+          const center = new fabric.Point(canvas.width / 2, canvas.height / 2);
+          const nextZoom = setZoomClamped(canvas.getZoom() / KB_ZOOM_STEP);
+          canvas.zoomToPoint(center, nextZoom);
+          canvas.requestRenderAll();
+          e.preventDefault();
+        }
+        if (e.key === "0") {
+          const nextZoom = setZoomClamped(1);
+          canvas.setZoom(nextZoom);
+          canvas.absolutePan(new fabric.Point(0, 0));
+          canvas.requestRenderAll();
+          e.preventDefault();
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        canvasStore.setIsPanning(false);
+        if (!isDraggingRef.current) {
+          canvas.setCursor(currentCursor());
+          canvas.requestRenderAll();
+        }
+      }
+    };
+
+    const handleMouseDown = (opt: any) => {
+      if (canvasStore.isPanning) {
+        isDraggingRef.current = true;
+        const e = opt.e as MouseEvent;
+        lastPosRef.current = { x: e.clientX, y: e.clientY };
+        canvas.setCursor("grabbing");
+        canvas.defaultCursor = "grabbing";
+        canvas.requestRenderAll();
+        // Disable selection while panning
+        canvas.selection = false;
+      }
+    };
+
+    const handleMouseMove = (opt: any) => {
+      if (isDraggingRef.current && lastPosRef.current) {
+        const e = opt.e as MouseEvent;
+        const delta = new fabric.Point(
+          e.clientX - lastPosRef.current.x,
+          e.clientY - lastPosRef.current.y
+        );
+        canvas.relativePan(delta);
+        lastPosRef.current = { x: e.clientX, y: e.clientY };
+        canvas.requestRenderAll();
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        lastPosRef.current = null;
+        canvas.selection = true;
+        canvas.setCursor(canvasStore.isPanning ? "grab" : currentCursor());
+        canvas.defaultCursor = currentCursor();
+        canvas.requestRenderAll();
+      }
+    };
+
+    canvas.on("mouse:wheel", handleWheel);
+    canvas.on("mouse:down", handleMouseDown);
+    canvas.on("mouse:move", handleMouseMove);
+    canvas.on("mouse:up", handleMouseUp);
+    window.addEventListener("keydown", handleKeyDown, { passive: false });
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      canvas.off("mouse:wheel", handleWheel);
+      canvas.off("mouse:down", handleMouseDown);
+      canvas.off("mouse:move", handleMouseMove);
+      canvas.off("mouse:up", handleMouseUp);
+      window.removeEventListener("keydown", handleKeyDown as any);
+      window.removeEventListener("keyup", handleKeyUp as any);
+    };
+  }, [canvas]);
 
   function currentCursor() {
     switch (canvasStore.selectedToolbarAction) {
@@ -78,6 +217,7 @@ const App = observer(() => {
   });
 
   canvas?.on("mouse:down", (e) => {
+    if (canvasStore.isPanning) return;
     switch (canvasStore.selectedToolbarAction) {
       case "text":
         return addText(e);
@@ -211,7 +351,7 @@ const App = observer(() => {
     const imageUrl = canvasStore.selectedImage.url;
     const pointer = canvas?.getScenePoint(e.e);
     const id = uuidv4();
-    const img = fabric.FabricImage.fromURL(imageUrl as string).then((img) => {
+    fabric.FabricImage.fromURL(imageUrl as string).then((img) => {
       const clipPath = new fabric.Rect({
         width: img.width,
         height: img.height,

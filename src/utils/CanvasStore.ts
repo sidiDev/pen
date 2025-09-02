@@ -24,6 +24,8 @@ class CanvasStore {
     | "frame"
     | "rectangle"
     | "image" = "cursor";
+  zoom = 1;
+  isPanning = false;
   selectedImage = {
     name: "" as string | null,
     url: null as string | null,
@@ -31,6 +33,14 @@ class CanvasStore {
 
   constructor() {
     makeAutoObservable(this);
+  }
+
+  setZoom(zoom: number) {
+    this.zoom = zoom;
+  }
+
+  setIsPanning(isPanning: boolean) {
+    this.isPanning = isPanning;
   }
 
   addObject(object: any) {
