@@ -56,6 +56,7 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
               .getObjects()
               .forEach((o: any) => applyDefaultObjectStyles(o));
             canvas.requestRenderAll();
+            canvas.set({ preserveObjectStacking: true });
           });
       });
     },

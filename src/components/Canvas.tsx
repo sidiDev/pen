@@ -37,6 +37,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         selectionLineWidth: 1,
         selectionBorderColor: "#60a5fa",
         freeDrawingCursor: "crosshair",
+        preserveObjectStacking: true,
       });
 
       canvas.preserveObjectStacking = true;

@@ -56,7 +56,7 @@ class CanvasStore {
   }
 
   addObject(object: any) {
-    this.currentPage.objects.unshift(object);
+    this.currentPage.objects.push(object);
   }
 
   setSelectedToolbarAction(
