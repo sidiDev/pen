@@ -2,8 +2,18 @@ import { makeAutoObservable } from "mobx";
 import * as fabric from "fabric";
 // import { observer } from "mobx-react-lite";
 
+export interface IPage {
+  id: string;
+  backgroundColor: {
+    hex: string;
+    rgba: string;
+    alpha: number;
+  };
+  name: string;
+  objects: Record<string, any>[];
+}
 class CanvasStore {
-  pages = [
+  pages: IPage[] = [
     {
       id: "1",
       backgroundColor: {
@@ -30,6 +40,8 @@ class CanvasStore {
     name: "" as string | null,
     url: null as string | null,
   };
+  private updateObjectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private updateListeners = new Set<(pages: IPage[]) => void>();
 
   constructor() {
     makeAutoObservable(this);
@@ -112,10 +124,37 @@ class CanvasStore {
       }
       return item;
     });
+    this.scheduleDebouncedUpdate();
+  }
+
+  private scheduleDebouncedUpdate() {
+    if (this.updateObjectTimeout) {
+      clearTimeout(this.updateObjectTimeout);
+    }
+    this.updateObjectTimeout = setTimeout(() => {
+      console.log("Updating Object");
+      for (const listener of this.updateListeners) {
+        try {
+          listener(this.allPages);
+        } catch (error) {
+          console.error("Debounced update listener error", error);
+        }
+      }
+      this.updateObjectTimeout = null;
+    }, 1000);
+  }
+
+  onDebouncedUpdate(listener: (pages: IPage[]) => void) {
+    this.updateListeners.add(listener);
+    return () => this.updateListeners.delete(listener);
   }
 
   setHoveredLayer(layer: fabric.FabricObject) {
     this.hoveredLayer = layer;
+  }
+
+  setUpdatePages(pages: any[]) {
+    this.pages = pages;
   }
 
   getLayerById(id: string) {
@@ -145,6 +184,10 @@ class CanvasStore {
       type: item?.type,
       children: [],
     }));
+  }
+
+  get allPages() {
+    return this.pages;
   }
 
   get currentPage() {

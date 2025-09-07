@@ -1,11 +1,11 @@
-import { JSX, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Frame,
   MousePointer2,
   Square,
   Type,
-  MoreHorizontal,
+  // MoreHorizontal,
   Image,
   Hash,
   ChevronRight,
@@ -32,7 +32,7 @@ import { ImagePicker } from "./ImagePicker";
 interface Layer {
   id: string;
   name: string;
-  type: "frame" | "text" | "image" | "group";
+  type: "frame" | "i-text" | "image" | "group" | "rect";
   children: any[];
 }
 
@@ -58,40 +58,40 @@ const toolbarActions: {
   },
 ];
 
-// Sample data structure
-const sampleLayers = [
-  {
-    id: "1",
-    name: "01 1",
-    type: "image",
-    children: [],
-  },
-  {
-    id: "2",
-    name: "MacBook Air - 1",
-    type: "frame",
-    children: [
-      {
-        id: "2.1",
-        name: "واجهة سهلة الاستخدام",
-        type: "text",
-        content: "واجهة سهلة الاستخدام",
-      },
-      {
-        id: "2.2",
-        name: "Frame 70233",
-        type: "frame",
-        children: [],
-      },
-      {
-        id: "2.3",
-        name: "android",
-        type: "frame",
-        children: [],
-      },
-    ],
-  },
-];
+// Sample data structure (unused)
+// const sampleLayers = [
+//   {
+//     id: "1",
+//     name: "01 1",
+//     type: "image",
+//     children: [],
+//   },
+//   {
+//     id: "2",
+//     name: "MacBook Air - 1",
+//     type: "frame",
+//     children: [
+//       {
+//         id: "2.1",
+//         name: "واجهة سهلة الاستخدام",
+//         type: "i-text",
+//         content: "واجهة سهلة الاستخدام",
+//       },
+//       {
+//         id: "2.2",
+//         name: "Frame 70233",
+//         type: "frame",
+//         children: [],
+//       },
+//       {
+//         id: "2.3",
+//         name: "android",
+//         type: "frame",
+//         children: [],
+//       },
+//     ],
+//   },
+// ];
 
 // Layer item component
 const LayerItem = observer(
@@ -115,8 +115,10 @@ const LayerItem = observer(
       switch (type) {
         case "frame":
           return <Hash className="flex-none size-3.5 text-neutral-400" />;
-        case "text":
+        case "i-text":
           return <Type className="flex-none size-3.5 text-neutral-400" />;
+        case "rect":
+          return <Square className="flex-none size-3.5 text-neutral-400" />;
         case "image":
           return <Image className="flex-none size-3.5 text-neutral-400" />;
         case "group":
@@ -155,7 +157,7 @@ const LayerItem = observer(
           {!hasChildren && <div className="w--5" />}
           {getIcon(layer.type)}
           <span className="text-neutral-300 text-xs truncate">
-            {layer.type == "text" ? layer.name || "Text" : layer.name}
+            {layer.type == "i-text" ? layer.name || "Text" : layer.name}
           </span>
         </div>
         {hasChildren && isExpanded && (
@@ -235,7 +237,6 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
     canvasStore.setHoveredLayer(layer);
   }
 
-  console.log("selectedLayers", toJS(canvasStore.selectedLayers));
   useEffect(() => {
     window.addEventListener("keydown", (e) => {
       setKeyDownName(e.key);

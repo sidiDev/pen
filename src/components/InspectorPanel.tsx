@@ -19,8 +19,8 @@ export interface PanelSettings {
   textAlign: string;
   fill: string | fabric.TFiller | null;
   opacity: number;
-  x: number | "Mixed";
-  y: number | "Mixed";
+  left: number | "Mixed";
+  top: number | "Mixed";
   width: number | "Mixed";
   height: number | "Mixed";
   charSpacing: number;
@@ -44,8 +44,8 @@ const InspectorPanel = observer(
       textAlign: "",
       fill: "",
       opacity: 0,
-      x: "Mixed",
-      y: "Mixed",
+      left: "Mixed",
+      top: "Mixed",
       width: "Mixed",
       height: "Mixed",
       charSpacing: 0,
@@ -77,8 +77,8 @@ const InspectorPanel = observer(
         if (layer) {
           setPanelSettings((data) => ({
             ...data,
-            x: Math.round(layer.left),
-            y: Math.round(layer.top),
+            left: Math.round(layer.left),
+            top: Math.round(layer.top),
             width: Math.round(layer.width),
             height: Math.round(layer.height),
             fill: layer.fill,

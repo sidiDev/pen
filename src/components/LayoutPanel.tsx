@@ -31,8 +31,8 @@ export function LayoutPanel({
     width: number | "Mixed";
     height: number | "Mixed";
   }>({
-    x: panelSettings.x,
-    y: panelSettings.y,
+    x: panelSettings.left as any,
+    y: panelSettings.top as any,
     width: panelSettings.width,
     height: panelSettings.height,
   });
@@ -92,10 +92,15 @@ export function LayoutPanel({
   }
 
   useEffect(() => {
-    setLayoutSettings(panelSettings);
+    setLayoutSettings({
+      x: panelSettings.left,
+      y: panelSettings.top,
+      width: panelSettings.width,
+      height: panelSettings.height,
+    });
   }, [
-    panelSettings.x,
-    panelSettings.y,
+    panelSettings.left,
+    panelSettings.top,
     panelSettings.width,
     panelSettings.height,
   ]);

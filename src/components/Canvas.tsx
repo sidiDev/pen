@@ -42,12 +42,12 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       canvas.preserveObjectStacking = true;
 
       canvas.on("text:changed", (e) => {
-        setTimeout(() => {
-          CanvasStore.setUpdateObject({
-            id: (e.target as any).id,
-            updates: { text: e.target.text },
-          });
-        }, 300);
+        console.log("text:changed", e);
+
+        CanvasStore.setUpdateObject({
+          id: (e.target as any).id,
+          updates: { text: e.target.text },
+        });
       });
 
       canvas.on("selection:created", (selectedEl) => {
@@ -55,7 +55,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         const selectedLayers = selectedEl.selected.forEach((el: any) => {
           CanvasStore.setSelectedLayer({
             id: el.id,
-            type: el.itemType,
+            type: el.itemType || el.type,
           });
         });
 
@@ -76,7 +76,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         const selectedLayers = e.selected.forEach((el: any) => {
           CanvasStore.setSelectedLayer({
             id: el.id,
-            type: el.itemType,
+            type: el.itemType || el.type,
           });
         });
       });
