@@ -9,6 +9,17 @@ export interface IPage {
     rgba: string;
     alpha: number;
   };
+  zoom: {
+    pointer: {
+      x: number;
+      y: number;
+    };
+    delta: {
+      x: number;
+      y: number;
+    };
+    value: number;
+  };
   name: string;
   objects: Record<string, any>[];
 }
@@ -16,6 +27,17 @@ class CanvasStore {
   pages: IPage[] = [
     {
       id: "1",
+      zoom: {
+        pointer: {
+          x: 0,
+          y: 0,
+        },
+        delta: {
+          x: 0,
+          y: 0,
+        },
+        value: 1,
+      },
       backgroundColor: {
         hex: "#fafafa",
         rgba: "RGBA(250, 250, 250, 1)",
@@ -47,8 +69,14 @@ class CanvasStore {
     makeAutoObservable(this);
   }
 
-  setZoom(zoom: number) {
-    this.zoom = zoom;
+  setZoom(zoom: {
+    pointer: { x: number; y: number };
+    delta: { x: number; y: number };
+    value: number;
+  }) {
+    this.currentPage.zoom = zoom;
+    console.log("zoom", zoom);
+    this.scheduleDebouncedUpdate();
   }
 
   setIsPanning(isPanning: boolean) {

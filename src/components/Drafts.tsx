@@ -20,6 +20,11 @@ function Drafts() {
           {
             id: uuidv4(),
             name: "Page 1",
+            zoom: {
+              pointer: { x: 0, y: 0 },
+              delta: { x: 0, y: 0 },
+              value: 1,
+            },
             backgroundColor: {
               hex: "#fafafa",
               rgba: "RGBA(250, 250, 250, 1)",

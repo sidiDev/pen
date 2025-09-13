@@ -9,6 +9,17 @@ export default defineSchema({
       v.object({
         id: v.string(),
         name: v.string(),
+        zoom: v.object({
+          pointer: v.object({
+            x: v.number(),
+            y: v.number(),
+          }),
+          delta: v.object({
+            x: v.number(),
+            y: v.number(),
+          }),
+          value: v.number(),
+        }),
         backgroundColor: v.object({
           hex: v.string(),
           rgba: v.string(),

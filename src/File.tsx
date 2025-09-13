@@ -49,6 +49,10 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       }
 
       pages.forEach((page) => {
+        canvas.setZoom(page.zoom.value);
+        canvas.relativePan(
+          new fabric.Point(page.zoom.delta.x, page.zoom.delta.y)
+        );
         canvas
           .loadFromJSON({ version: "5.2.4", objects: page.objects })
           .then((canvas) => {
@@ -75,9 +79,19 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     const WHEEL_ZOOM_EXP_BASE = 1.005;
     const KB_ZOOM_STEP = 1.2;
 
-    function setZoomClamped(nextZoom: number) {
+    function setZoomClamped(
+      nextZoom: number,
+      pointer: { x: number; y: number }
+    ) {
       const z = Math.min(maxZoom, Math.max(minZoom, nextZoom));
-      canvasStore.setZoom(z);
+      canvasStore.setZoom({
+        pointer: { x: pointer.x, y: pointer.y },
+        delta: {
+          x: canvasStore.currentPage.zoom.delta.x,
+          y: canvasStore.currentPage.zoom.delta.y,
+        },
+        value: z,
+      });
       return z;
     }
 
@@ -93,11 +107,29 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
         );
         const currentZoom = canvas.getZoom();
         const zoomFactor = Math.pow(WHEEL_ZOOM_EXP_BASE, -e.deltaY);
-        const nextZoom = setZoomClamped(currentZoom * zoomFactor);
+        const nextZoom = setZoomClamped(currentZoom * zoomFactor, pointer);
+        console.log("pointer", pointer);
+        console.log("nextZoom", nextZoom);
+
         canvas.zoomToPoint(pointer, nextZoom);
         canvas.requestRenderAll();
       } else {
+        const vpt = canvas.viewportTransform!;
+        console.log("vpt", vpt);
+
+        const canvasRect = canvas.upperCanvasEl.getBoundingClientRect();
+        const pointer2 = {
+          x: e.clientX - canvasRect.left,
+          y: e.clientY - canvasRect.top,
+        };
+
         const delta = new fabric.Point(-e.deltaX, -e.deltaY);
+        canvasStore.setZoom({
+          pointer: { x: pointer2.x, y: pointer2.y },
+          delta: { x: vpt[4], y: vpt[5] },
+          value: canvasStore.currentPage.zoom.value,
+        });
+        console.log({ x: delta.x, y: delta.y });
         canvas.relativePan(delta);
         canvas.requestRenderAll();
       }
@@ -124,20 +156,26 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       if (e.metaKey || e.ctrlKey) {
         if (e.key === "+" || e.key === "=") {
           const center = new fabric.Point(canvas.width / 2, canvas.height / 2);
-          const nextZoom = setZoomClamped(canvas.getZoom() * KB_ZOOM_STEP);
+          const nextZoom = setZoomClamped(
+            canvas.getZoom() * KB_ZOOM_STEP,
+            center
+          );
           canvas.zoomToPoint(center, nextZoom);
           canvas.requestRenderAll();
           e.preventDefault();
         }
         if (e.key === "-") {
           const center = new fabric.Point(canvas.width / 2, canvas.height / 2);
-          const nextZoom = setZoomClamped(canvas.getZoom() / KB_ZOOM_STEP);
+          const nextZoom = setZoomClamped(
+            canvas.getZoom() / KB_ZOOM_STEP,
+            center
+          );
           canvas.zoomToPoint(center, nextZoom);
           canvas.requestRenderAll();
           e.preventDefault();
         }
         if (e.key === "0") {
-          const nextZoom = setZoomClamped(1);
+          const nextZoom = setZoomClamped(1, { x: 0, y: 0 });
           canvas.setZoom(nextZoom);
           canvas.absolutePan(new fabric.Point(0, 0));
           canvas.requestRenderAll();
@@ -490,9 +528,24 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     }
   }, [canvasStore.hoveredLayer, canvas]);
 
+  // To test something
+  function handleClick() {
+    const value = 0.2666819576535833;
+    const minZoom = 0.05;
+    const maxZoom = 8;
+    const z = Math.min(maxZoom, Math.max(minZoom, value));
+    canvas?.setZoom(z);
+    // const pointer = new fabric.Point(614, 194);
+    // canvas?.zoomToPoint(pointer, value);
+    canvas?.requestRenderAll();
+  }
+
   return (
     <LayoutContainer canvas={canvas}>
       <>
+        <div className="flex justify-center">
+          <button onClick={handleClick}>Click me</button>
+        </div>
         <Canvas
           onLoad={onLoad}
           canvasRef={canvasRef as RefObject<HTMLCanvasElement>}
