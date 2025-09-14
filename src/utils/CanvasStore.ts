@@ -155,6 +155,11 @@ class CanvasStore {
     this.scheduleDebouncedUpdate();
   }
 
+  setUpdatePageName(name: string) {
+    this.currentPage.name = name;
+    this.scheduleDebouncedUpdate();
+  }
+
   private scheduleDebouncedUpdate() {
     if (this.updateObjectTimeout) {
       clearTimeout(this.updateObjectTimeout);

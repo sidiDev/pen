@@ -181,6 +181,7 @@ const LayerItem = observer(
 
 const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
   const [isPagesExpanded, setIsPagesExpanded] = useState(true);
+  const [isPageEditable, setIsPageEditable] = useState(false);
   const [keyDownName, setKeyDownName] = useState("");
   const navigate = useNavigate();
 
@@ -301,8 +302,21 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
             </div>
             {isPagesExpanded && (
               <div className="px-2 pt-2">
-                <Button className="text-xs font-normal bg-neutral-700/50 hover:bg-neutral-700/50 w-full block text-left pl-8">
-                  Page 1
+                <Button
+                  asChild
+                  data-editable={isPageEditable}
+                  className="text-xs font-normal bg-neutral-700/50 data-[editable=false]:selection:bg-neutral-700/50 hover:bg-neutral-700/50 w-full block text-left pl-8 outline-none focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0 border border-transparent data-[editable=true]:border-neutral-500 cursor-auto data-[editable=true]:cursor-text"
+                >
+                  <input
+                    onDoubleClick={() => setIsPageEditable(true)}
+                    onBlur={() => setIsPageEditable(false)}
+                    readOnly={!isPageEditable}
+                    type="text"
+                    value={canvasStore.currentPage.name}
+                    onChange={(e) => {
+                      canvasStore.setUpdatePageName(e.target.value);
+                    }}
+                  />
                 </Button>
               </div>
             )}

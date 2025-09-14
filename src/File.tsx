@@ -139,6 +139,15 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore shortcuts while typing in inputs or contenteditable elements
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      const isInputLike =
+        !!target &&
+        (tagName === "input" ||
+          tagName === "textarea" ||
+          (target as HTMLElement).isContentEditable);
+      if (isInputLike) return;
       // If editing text, allow normal typing including Space
       const activeObject: any = canvas.getActiveObject?.();
       const isEditingText =
@@ -185,6 +194,15 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      // Ignore when focus is in inputs/contenteditable
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      const isInputLike =
+        !!target &&
+        (tagName === "input" ||
+          tagName === "textarea" ||
+          (target as HTMLElement).isContentEditable);
+      if (isInputLike) return;
       if (e.code === "Space") {
         canvasStore.setIsPanning(false);
         if (!isDraggingRef.current) {
@@ -502,7 +520,8 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
         height: canvasStore.hoveredLayer.getScaledHeight(),
         fill: "transparent",
         stroke: "#60a5fa",
-        strokeWidth: 2,
+        strokeWidth: 2 / (canvas?.getZoom() ?? 1),
+        strokeUniform: true,
         selectable: false,
         evented: false,
         hoverCursor: "default",
@@ -528,6 +547,21 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     }
   }, [canvasStore.hoveredLayer, canvas]);
 
+  // Keep hover border width constant on screen when zoom changes
+  useEffect(() => {
+    if (!canvas) return;
+    const hoverElement = canvas
+      .getObjects()
+      .find((obj) => (obj as any).id === "hover-element") as
+      | fabric.Rect
+      | undefined;
+    if (hoverElement) {
+      hoverElement.set("strokeWidth", 2 / canvas.getZoom());
+      hoverElement.set("strokeUniform", true);
+      canvas.requestRenderAll();
+    }
+  }, [canvasStore.currentPage.zoom.value, canvas]);
+
   // To test something
   function handleClick() {
     const value = 0.2666819576535833;
@@ -544,7 +578,7 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     <LayoutContainer canvas={canvas}>
       <>
         <div className="flex justify-center">
-          <button onClick={handleClick}>Click me</button>
+          {/* <button onClick={handleClick}>Click me</button> */}
         </div>
         <Canvas
           onLoad={onLoad}
