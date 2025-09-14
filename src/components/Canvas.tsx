@@ -29,16 +29,9 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         return;
       }
 
-      const canvas = new fabric.Canvas(canvasRef.current, {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        selection: true,
-        selectionColor: "rgba(0, 120, 215, 0.1)",
-        selectionLineWidth: 1,
-        selectionBorderColor: "#60a5fa",
-        freeDrawingCursor: "crosshair",
-        preserveObjectStacking: true,
-      });
+      (canvasRef.current as any) = initCanvas();
+
+      const canvas: fabric.Canvas = canvasRef.current as any;
 
       canvas.preserveObjectStacking = true;
 
@@ -136,6 +129,19 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       };
     }, [canvasRef, onLoad]);
 
-    return <canvas ref={canvasRef} {...props} />;
+    function initCanvas() {
+      new fabric.Canvas("canvas", {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        selection: true,
+        selectionColor: "rgba(0, 120, 215, 0.1)",
+        selectionLineWidth: 1,
+        selectionBorderColor: "#60a5fa",
+        freeDrawingCursor: "crosshair",
+        preserveObjectStacking: true,
+      });
+    }
+
+    return <canvas id="canvas" {...props} />;
   }
 );
