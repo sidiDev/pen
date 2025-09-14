@@ -115,20 +115,24 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       // to ensure the canvas is disposed and re-created if it changes
       onLoad?.(canvas);
 
+      canvas.dispose();
+
       return () => {
-        DEV_MODE && delete window.canvas;
+        if (canvasRef && canvas) {
+          DEV_MODE && delete window.canvas;
 
-        if (typeof ref === "function") {
-          ref(null);
-        } else if (typeof ref === "object" && ref) {
-          ref.current = null;
+          if (typeof ref === "function") {
+            ref(null);
+          } else if (typeof ref === "object" && ref) {
+            ref.current = null;
+          }
+
+          // `dispose` is async
+          // however it runs a sync DOM cleanup
+          // its async part ensures rendering has completed
+          // and should not affect react
+          canvas.dispose();
         }
-
-        // `dispose` is async
-        // however it runs a sync DOM cleanup
-        // its async part ensures rendering has completed
-        // and should not affect react
-        canvas.dispose();
       };
     }, [canvasRef, onLoad]);
 
