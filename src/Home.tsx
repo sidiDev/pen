@@ -2,6 +2,7 @@ import Login from "./components/Login";
 import {
   Authenticated,
   Unauthenticated,
+  AuthLoading,
   useQuery,
   useConvexAuth,
 } from "convex/react";
@@ -27,6 +28,9 @@ function Home() {
       <Authenticated>
         <Content />
       </Authenticated>
+      <AuthLoading>
+        <LoadingView />
+      </AuthLoading>
     </>
   );
 }
@@ -34,7 +38,8 @@ function Home() {
 function Content() {
   // const { isLoading, isAuthenticated } = useConvexAuth();
   const user = useQuery(api.users.viewer);
-  if (!user) return <LoadingView />;
+  console.log(user);
+
   return (
     <main className="space-y-6">
       <Navbar user={user as { email: string; name: string; image: string }} />

@@ -29,9 +29,9 @@ function Navbar({
           <DropdownMenuTrigger>
             {" "}
             <Avatar>
-              <AvatarImage src={user.image} />
+              <AvatarImage src={user?.image} />
               <AvatarFallback className="">
-                {user.name.charAt(0)}
+                {user?.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>

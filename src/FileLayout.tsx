@@ -1,6 +1,11 @@
 import File from "./File.tsx";
 import { useParams } from "react-router";
-import { Authenticated, Unauthenticated, useQuery } from "convex/react";
+import {
+  Authenticated,
+  Unauthenticated,
+  useQuery,
+  AuthLoading,
+} from "convex/react";
 import Login from "./components/Login.tsx";
 import LoadingView from "./components/LoadingView.tsx";
 import DesignNotFound from "./components/DesignNotFound.tsx";
@@ -22,6 +27,9 @@ function FileLayout() {
       <Unauthenticated>
         <Login />
       </Unauthenticated>
+      <AuthLoading>
+        <LoadingView />
+      </AuthLoading>
     </>
   );
 }
@@ -29,9 +37,6 @@ function FileLayout() {
 const Content = observer(function Content({ id }: { id: string }) {
   const user = useQuery(api.users.viewer);
   const mutateFile = useMutation(api.files.updateFile);
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   const queryFile = useQuery(api.files.getFile, {
     fileId: id as any,
@@ -42,7 +47,6 @@ const Content = observer(function Content({ id }: { id: string }) {
       canvasStore.setUpdatePages(queryFile.pages);
       console.log("queryFile", queryFile.pages);
     }
-    setIsLoading(false);
   }, [queryFile?.pages]);
 
   useEffect(() => {
@@ -56,7 +60,6 @@ const Content = observer(function Content({ id }: { id: string }) {
     });
   }, []);
 
-  if (!user || isLoading) return <LoadingView />;
   if (!queryFile) return <DesignNotFound />;
   return <File pages={queryFile.pages} />;
 });
