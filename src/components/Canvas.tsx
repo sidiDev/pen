@@ -1,7 +1,6 @@
 import CanvasStore from "@/utils/CanvasStore";
 import * as fabric from "fabric";
-import { toJS } from "mobx";
-import React, { RefObject, useEffect, useRef } from "react";
+import React, { RefObject, useEffect } from "react";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
 
@@ -29,9 +28,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         return;
       }
 
-      (canvasRef.current as any) = initCanvas();
-
-      const canvas: fabric.Canvas = canvasRef.current as any;
+      const canvas = initCanvas(canvasRef.current);
 
       canvas.preserveObjectStacking = true;
 
@@ -46,7 +43,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
 
       canvas.on("selection:created", (selectedEl) => {
         CanvasStore.setHoveredLayer(null as any);
-        const selectedLayers = selectedEl.selected.forEach((el: any) => {
+        selectedEl.selected.forEach((el: any) => {
           CanvasStore.setSelectedLayer({
             id: el.id,
             type: el.itemType || el.type,
@@ -67,7 +64,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         const unselectedIds = e.deselected.map((item: any) => item.id);
         CanvasStore.setUnselectLayer(unselectedIds);
         CanvasStore.setHoveredLayer(null as any);
-        const selectedLayers = e.selected.forEach((el: any) => {
+        e.selected.forEach((el: any) => {
           CanvasStore.setSelectedLayer({
             id: el.id,
             type: el.itemType || el.type,
@@ -90,7 +87,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         }
       });
 
-      canvas.on("mouse:out", (e) => {
+      canvas.on("mouse:out", () => {
         CanvasStore.setHoveredLayer(null as any);
       });
 
@@ -108,7 +105,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       // to ensure the canvas is disposed and re-created if it changes
       onLoad?.(canvas);
 
-      canvas.dispose();
+      // canvas.dispose();
 
       return () => {
         if (canvasRef && canvas) {
@@ -124,13 +121,13 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
           // however it runs a sync DOM cleanup
           // its async part ensures rendering has completed
           // and should not affect react
-          canvas.dispose();
         }
+        canvas.dispose();
       };
     }, [canvasRef, onLoad]);
 
-    function initCanvas() {
-      new fabric.Canvas("canvas", {
+    function initCanvas(element: HTMLCanvasElement) {
+      const canvas = new fabric.Canvas(element, {
         width: window.innerWidth,
         height: window.innerHeight,
         selection: true,
@@ -140,8 +137,9 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         freeDrawingCursor: "crosshair",
         preserveObjectStacking: true,
       });
+      return canvas;
     }
 
-    return <canvas id="canvas" {...props} />;
+    return <canvas id="canvas" ref={canvasRef} {...props} />;
   }
 );
