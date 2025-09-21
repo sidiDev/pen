@@ -22,12 +22,12 @@ function Home() {
 
   return (
     <>
-      <Unauthenticated>
-        <Login />
-      </Unauthenticated>
       <Authenticated>
         <Content />
       </Authenticated>
+      <Unauthenticated>
+        <Login />
+      </Unauthenticated>
       <AuthLoading>
         <LoadingView />
       </AuthLoading>
@@ -36,10 +36,9 @@ function Home() {
 }
 
 function Content() {
-  // const { isLoading, isAuthenticated } = useConvexAuth();
   const user = useQuery(api.users.viewer);
-  console.log(user);
 
+  if (!user) return <LoadingView />;
   return (
     <main className="space-y-6">
       <Navbar user={user as { email: string; name: string; image: string }} />

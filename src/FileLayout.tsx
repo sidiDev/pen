@@ -60,6 +60,7 @@ const Content = observer(function Content({ id }: { id: string }) {
     });
   }, []);
 
+  if (!user) return <LoadingView />;
   if (!queryFile) return <DesignNotFound />;
   return <File pages={queryFile.pages} />;
 });
