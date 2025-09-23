@@ -42,7 +42,7 @@ function Content() {
   return (
     <main className="space-y-6">
       <Navbar user={user as { email: string; name: string; image: string }} />
-      <Drafts />
+      <Drafts userId={user._id} />
     </main>
   );
 }

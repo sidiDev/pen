@@ -32,6 +32,7 @@ export default defineSchema({
     name: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
+    userId: v.id("users"),
   }),
   //   users: defineTable({
   //     name: v.optional(v.string()),

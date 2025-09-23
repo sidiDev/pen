@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const viewer = query({
   args: {},
@@ -39,6 +40,7 @@ export const createFile = mutation({
       name: v.string(),
       createdAt: v.number(),
       updatedAt: v.number(),
+      userId: v.id("users"),
     }),
   },
   handler: async (ctx, args) => {
@@ -92,5 +94,17 @@ export const getFile = query({
     if (!id) return null;
     const file = await ctx.db.get(id);
     return file || null;
+  },
+});
+
+export const getFiles = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    const files = await ctx.db
+      .query("files")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
+    return files;
   },
 });

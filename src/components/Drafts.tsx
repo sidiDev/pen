@@ -2,15 +2,17 @@ import { Button } from "./ui/button";
 import { PlusIcon } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router";
 
-function Drafts() {
+function Drafts({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(false);
 
   const mutateFile = useMutation(api.files.createFile);
+  const files = useQuery(api.files.getFiles);
+
   const navigate = useNavigate();
   function createDraft() {
     setLoading(true);
@@ -36,6 +38,7 @@ function Drafts() {
         name: "New Draft",
         createdAt: Date.now(),
         updatedAt: Date.now(),
+        userId: userId as any,
       },
     }).then((fileId) => {
       console.log(fileId);
@@ -57,6 +60,7 @@ function Drafts() {
           New Draft
         </Button>
       </div>
+      <div className="grid grid-cols-4 gap-4"></div>
     </section>
   );
 }

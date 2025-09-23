@@ -93,14 +93,6 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
 
       // canvas.setZoom(0.09);
 
-      DEV_MODE && (window.canvas = canvas);
-
-      if (typeof ref === "function") {
-        ref(canvas);
-      } else if (typeof ref === "object" && ref) {
-        ref.current = canvas;
-      }
-
       // it is crucial `onLoad` is a dependency of this effect
       // to ensure the canvas is disposed and re-created if it changes
       onLoad?.(canvas);
@@ -108,23 +100,9 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       // canvas.dispose();
 
       return () => {
-        if (canvasRef && canvas) {
-          DEV_MODE && delete window.canvas;
-
-          if (typeof ref === "function") {
-            ref(null);
-          } else if (typeof ref === "object" && ref) {
-            ref.current = null;
-          }
-
-          // `dispose` is async
-          // however it runs a sync DOM cleanup
-          // its async part ensures rendering has completed
-          // and should not affect react
-        }
-        canvas.dispose();
+        canvas?.dispose();
       };
-    }, [canvasRef, onLoad]);
+    }, []);
 
     function initCanvas(element: HTMLCanvasElement) {
       const canvas = new fabric.Canvas(element, {
