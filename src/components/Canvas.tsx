@@ -97,8 +97,6 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       // to ensure the canvas is disposed and re-created if it changes
       onLoad?.(canvas);
 
-      // canvas.dispose();
-
       return () => {
         canvas?.dispose();
       };
@@ -109,12 +107,29 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
         width: window.innerWidth,
         height: window.innerHeight,
         selection: true,
+        stopContextMenu: true,
         selectionColor: "rgba(0, 120, 215, 0.1)",
         selectionLineWidth: 1,
+        selectionFullyContained: false,
         selectionBorderColor: "#60a5fa",
         freeDrawingCursor: "crosshair",
         preserveObjectStacking: true,
       });
+
+      fabric.ActiveSelection.prototype.setControlsVisibility({
+        ml: false, // middle-left
+        mt: false, // middle-top
+        mr: false, // middle-right
+        mb: false, // middle-bottom
+        mtr: false, // rotation control (optional)
+      });
+      fabric.ActiveSelection.ownDefaults.transparentCorners = false;
+      fabric.ActiveSelection.ownDefaults.borderScaleFactor = 1.5;
+      fabric.ActiveSelection.ownDefaults.cornerColor = "#FFF";
+      fabric.ActiveSelection.ownDefaults.cornerStrokeColor = "#3b82f6";
+      fabric.ActiveSelection.ownDefaults.borderColor = "#3b82f6";
+      fabric.ActiveSelection.ownDefaults.cornerSize = 8;
+
       return canvas;
     }
 

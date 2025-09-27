@@ -23,6 +23,7 @@ export interface IPage {
   name: string;
   objects: Record<string, any>[];
 }
+
 class CanvasStore {
   pages: IPage[] = [
     {
@@ -39,8 +40,8 @@ class CanvasStore {
         value: 1,
       },
       backgroundColor: {
-        hex: "#fafafa",
-        rgba: "RGBA(250, 250, 250, 1)",
+        hex: "",
+        rgba: "",
         alpha: 1,
       },
       name: "Page 1",
@@ -57,6 +58,7 @@ class CanvasStore {
     | "rectangle"
     | "image" = "cursor";
   zoom = 1;
+  isEditingText = false;
   isPanning = false;
   selectedImage = {
     name: "" as string | null,
@@ -85,6 +87,7 @@ class CanvasStore {
 
   addObject(object: any) {
     this.currentPage.objects.push(object);
+    this.scheduleDebouncedUpdate();
   }
 
   setSelectedToolbarAction(
@@ -142,8 +145,21 @@ class CanvasStore {
   }
 
   setUpdateObject({ id, updates }: { id: string; updates: Object }) {
-    this.currentPage.objects = this.currentPage.objects.map((item) => {
+    this.currentPage.objects = this.currentPage.objects.map((item: any) => {
       if (item.id == id) {
+        // If updating borderRadius for an image, also update the clipPath
+        if (item.type === "image" && (updates as any).borderRadius) {
+          const borderRadius = (updates as any).borderRadius;
+          const updatedItem = { ...item, ...updates };
+          if (updatedItem.clipPath) {
+            updatedItem.clipPath = {
+              ...updatedItem.clipPath,
+              rx: borderRadius.r || borderRadius.rx || 0,
+              ry: borderRadius.r || borderRadius.ry || 0,
+            };
+          }
+          return updatedItem;
+        }
         return { ...item, ...updates };
       }
 
@@ -194,6 +210,16 @@ class CanvasStore {
     return this.selectedLayers.filter((item) => item.id == id);
   }
 
+  deleteSelectedLayers() {
+    this.selectedLayers.forEach((layer) => {
+      this.currentPage.objects = this.currentPage.objects.filter(
+        (item) => item.id !== layer.id
+      );
+    });
+    this.setEmptySelectedLayers();
+    this.scheduleDebouncedUpdate();
+  }
+
   get selectedToolbarAction() {
     return this.selectedToolbarActionState;
   }
@@ -231,7 +257,13 @@ class CanvasStore {
     this.pages[this.currentPageNumber].backgroundColor.hex = color;
     this.pages[this.currentPageNumber].backgroundColor.rgba = rgba;
     this.pages[this.currentPageNumber].backgroundColor.alpha = alpha;
+    this.scheduleDebouncedUpdate();
   }
 }
 
-export default new CanvasStore();
+const canvasStore = new CanvasStore();
+
+// Export the type of the CanvasStore instance
+export type CanvasStoreType = typeof canvasStore;
+
+export default canvasStore;

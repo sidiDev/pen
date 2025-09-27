@@ -123,8 +123,6 @@ const LayerItem = observer(
           return <Image className="flex-none size-3.5 text-neutral-400" />;
         case "group":
           return <Frame className="flex-none size-3.5 text-neutral-400" />;
-        default:
-          return <Frame className="flex-none size-3.5 text-neutral-400" />;
       }
     };
 
@@ -239,6 +237,12 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
   }
 
   useEffect(() => {
+    window.addEventListener("focusin", () => {
+      canvasStore.isEditingText = true;
+    });
+    window.addEventListener("focusout", () => {
+      canvasStore.isEditingText = false;
+    });
     window.addEventListener("keydown", (e) => {
       setKeyDownName(e.key);
     });
@@ -246,6 +250,21 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
       setKeyDownName("");
     });
   }, []);
+
+  useEffect(() => {
+    if (
+      keyDownName === "Backspace" &&
+      canvasStore.hasSelectedLayers &&
+      !canvasStore.isEditingText
+    ) {
+      const activeObjects = canvas?.getActiveObjects();
+      canvas?.remove(...(activeObjects || []));
+      canvas?.discardActiveObject();
+      canvas?.requestRenderAll();
+      console.log(activeObjects);
+      canvasStore.deleteSelectedLayers();
+    }
+  }, [keyDownName]);
 
   useEffect(() => {
     // Handle radius in selected layers elements

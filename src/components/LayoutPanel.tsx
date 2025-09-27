@@ -51,9 +51,17 @@ export function LayoutPanel({
         ...panelSettings,
         [property]: "Mixed",
       });
-    } else if (!isMultiSelect && value.match(/^\d+$/) !== null) {
-      console.log("Blur", value);
+    } else if (value.match(/^\d+$/) !== null) {
       const newValue = isNumber ? Number(value) : value;
+      console.log("Blur", value, { [property]: newValue });
+
+      const newProps: Record<string, any> = {};
+      const isDimension = property === "width" || property === "height";
+
+      if (isDimension) {
+        newProps.type = "textbox";
+      }
+
       setLayoutSettings({
         ...layoutSettings,
         [property]: newValue,
@@ -63,31 +71,24 @@ export function LayoutPanel({
         [property]: newValue,
       });
 
-      if (isMultiSelect) {
-        selectedLayers.forEach((layerId) => {
-          canvasStore.setUpdateObject({
-            id: layerId,
-            updates: { [property]: newValue },
-          });
-        });
-      } else {
-        console.log(selectedLayers[0]);
-
-        const layer = canvas
-          ?.getObjects()
-          .find((obj) => (obj as any).id === selectedLayers[0]);
-        if (layer) {
-          layer.set({ [property]: newValue });
-          layer.setCoords();
-          canvas?.renderAll();
-          console.log(newValue);
-        }
-
+      canvas?.getActiveObjects().forEach((obj) => {
+        // const newProps: Record<string, any> = {};
+        // const isDimension = property === "width" || property === "height";
+        obj.set(property, newValue);
+        obj.setCoords?.();
+        // if (isDimension && obj.type === "i-text") {
+        //   newProps.type = "textbox";
+        // }
+        // console.log("newProps", newProps);
         canvasStore.setUpdateObject({
-          id: selectedLayers[0],
-          updates: { [property]: newValue },
+          id: (obj as any).id,
+          updates: {
+            [property]: newValue,
+            // ...newProps,
+          },
         });
-      }
+      });
+      canvas?.renderAll();
     }
   }
 
@@ -210,17 +211,19 @@ export function LayoutPanel({
       {!isImage && (
         <>
           {/* Resizing */}
-          <div className="">
+          <div className="opacity-50">
             <label className="text-xs text-neutral-400">Resizing</label>
             <div className="mt-0.5 flex gap-2">
               <div className="flex-1 flex items-center bg-neutral-700/50 h-7 p-1 rounded-md">
                 <Button
+                  disabled
                   size="icon"
                   className="size-6 flex-1 bg-zinc-800 border-none shadow-none hover:bg-neutral-800 text-neutral-200 hover:text-neutral-100"
                 >
                   <ArrowRightFromLine className="w-4 h-4" />
                 </Button>
                 <Button
+                  disabled
                   size="icon"
                   className="size-6 flex-1 bg-transparent border-none shadow-none hover:bg-transparent text-neutral-200 hover:text-neutral-100"
                 >

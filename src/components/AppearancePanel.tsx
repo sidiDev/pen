@@ -35,14 +35,15 @@ export function AppearancePanel({
   });
 
   function handleBlur(value: string, property: "opacity" | "cornerRadius") {
-    const isNumber = value.match(/^\d+$/) !== null;
+    const trimmed = value.trim();
+    const isNumber = trimmed !== "" && !Number.isNaN(Number(trimmed));
 
-    if (value === "" || (!isNumber && isMultiSelect)) {
-      setAppearanceSettings({
-        ...appearanceSettings,
-        [property]: "Mixed",
-      });
+    if (trimmed === "" || (!isNumber && isMultiSelect)) {
       if (property === "opacity") {
+        setAppearanceSettings({
+          ...appearanceSettings,
+          opacity: "Mixed",
+        });
         setPanelSettings({
           ...panelSettings,
           opacity: "Mixed" as any,
@@ -51,67 +52,100 @@ export function AppearancePanel({
       return;
     }
 
-    if (!isMultiSelect && isNumber) {
-      let numericValue = Number(value);
-      if (property === "opacity") {
-        if (Number.isNaN(numericValue)) numericValue = 0;
-        numericValue = Math.max(0, Math.min(100, numericValue));
-      }
+    if (!isNumber) return;
 
+    let numericValue = Number(trimmed);
+    if (property === "opacity") {
+      if (Number.isNaN(numericValue)) numericValue = 0;
+      numericValue = Math.max(0, Math.min(100, numericValue));
+    }
+
+    if (property === "opacity") {
       setAppearanceSettings({
         ...appearanceSettings,
-        [property]: numericValue,
+        opacity: numericValue,
       });
+      setPanelSettings({
+        ...panelSettings,
+        opacity: numericValue as number,
+      });
+    } else {
+      const radius = Math.max(0, numericValue);
+      setAppearanceSettings({
+        ...appearanceSettings,
+        cornerRadius: { r: radius, l: radius, t: radius, b: radius },
+      });
+      setPanelSettings({
+        ...panelSettings,
+        borderRadius: { r: radius, l: radius, t: radius, b: radius },
+      });
+    }
+
+    const applyToLayer = (layerId: string) => {
+      const layer = canvas
+        ?.getObjects()
+        .find((obj) => (obj as any).id === layerId) as any;
+
+      if (!layer) {
+        console.error("Layer not found:", layerId);
+        return;
+      }
 
       if (property === "opacity") {
-        const normalized = (numericValue as number) / 100;
-        setPanelSettings({
-          ...panelSettings,
-          opacity: numericValue as number,
-        });
+        layer.set({ opacity: (numericValue as number) / 100 });
+      } else {
+        const radius = Math.max(0, numericValue);
+        // For images, ensure clipPath exists and update it
+        if (layer.type === "image" || layer.itemType === "image") {
+          const clipPath = new fabric.Rect({
+            width: layer.width / layer.scaleX,
+            height: layer.height / layer.scaleY,
+            rx: radius,
+            ry: radius,
+            originX: "center",
+            originY: "center",
+          });
+          layer.set({ clipPath });
+          // Mark the object as dirty to force re-render
+          layer.dirty = true;
+        }
       }
+      layer.setCoords?.();
+      canvas?.requestRenderAll();
+    };
 
-      if (isMultiSelect) {
-        selectedLayers.forEach((layerId) => {
-          const updates: Record<string, any> =
-            property === "opacity"
-              ? { opacity: (numericValue as number) / 100 }
-              : { rx: numericValue, ry: numericValue };
-          canvasStore.setUpdateObject({ id: layerId, updates });
+    const persistUpdates = (layerId: string) => {
+      if (property === "opacity") {
+        canvasStore.setUpdateObject({
+          id: layerId,
+          updates: { opacity: (numericValue as number) / 100 },
         });
       } else {
-        const targetId = selectedLayers[0];
-        const layer = canvas
-          ?.getObjects()
-          .find((obj) => (obj as any).id === targetId) as any;
-
-        if (layer) {
-          if (property === "opacity") {
-            layer.set({ opacity: (numericValue as number) / 100 });
-          } else {
-            // fabric objects commonly use rx/ry for corner radii
-            layer.set({ rx: numericValue, ry: numericValue });
-          }
-          layer.setCoords?.();
-          canvas?.renderAll();
-        }
-
-        const updates: Record<string, any> =
-          property === "opacity"
-            ? { opacity: numericValue }
-            : { rx: numericValue, ry: numericValue };
-        canvasStore.setUpdateObject({ id: targetId, updates });
+        const radius = Math.max(0, numericValue);
+        canvasStore.setUpdateObject({
+          id: layerId,
+          updates: {
+            borderRadius: { r: radius, l: radius, t: radius, b: radius },
+          },
+        });
       }
+    };
+
+    if (isMultiSelect) {
+      selectedLayers.forEach((layerId) => {
+        applyToLayer(layerId);
+        persistUpdates(layerId);
+      });
+    } else if (selectedLayers[0]) {
+      const layerId = selectedLayers[0];
+      applyToLayer(layerId);
+      persistUpdates(layerId);
     }
   }
 
   useEffect(() => {
-    console.log(panelSettings.opacity);
-
-    // Sync opacity directly from panelSettings
-    // Corner radius is read from the fabric object when possible
     setAppearanceSettings({
-      opacity: panelSettings.opacity == 0 ? 100 : panelSettings.opacity,
+      opacity: panelSettings.opacity,
       cornerRadius: panelSettings.borderRadius,
     });
   }, [panelSettings.opacity, panelSettings.borderRadius]);
@@ -128,15 +162,19 @@ export function AppearancePanel({
           <label className="text-xs text-neutral-400">Opacity</label>
           <div className="mt-0.5 relative">
             <input
-              type="text"
+              type="number"
               value={appearanceSettings.opacity}
               onChange={(e) => {
+                const v = e.target.value;
                 setAppearanceSettings({
                   ...appearanceSettings,
-                  opacity: (e.target.value === ""
-                    ? ("" as any)
-                    : (Number(e.target.value) as any)) as any,
+                  opacity: (v === "" ? ("" as any) : (Number(v) as any)) as any,
                 });
+                // Apply changes in real-time for better UX
+                const n = Number(v);
+                if (!Number.isNaN(n) && n >= 0 && n <= 100) {
+                  handleBlur(v, "opacity");
+                }
               }}
               onBlur={(e) => handleBlur(e.target.value, "opacity")}
               className="w-full h-7 px-3 py-2 pl-8 bg-neutral-700/50 border border-neutral-700 rounded-md text-neutral-200 text-xs focus:outline-none hover:border-neutral-500 focus:border-neutral-500 transition-all duration-200"
@@ -150,15 +188,20 @@ export function AppearancePanel({
           <label className="text-xs text-neutral-400">Corner radius</label>
           <div className="mt-0.5 relative">
             <input
-              type="text"
+              type="number"
               value={appearanceSettings.cornerRadius.r}
               onChange={(e) => {
+                const v = e.target.value;
+                const n = v === "" ? 0 : Number(v);
+                const radius = Math.max(0, Number.isNaN(n) ? 0 : n);
                 setAppearanceSettings({
                   ...appearanceSettings,
-                  cornerRadius: (e.target.value === ""
-                    ? ("" as any)
-                    : (Number(e.target.value) as any)) as any,
+                  cornerRadius: { r: radius, l: radius, t: radius, b: radius },
                 });
+                // Apply changes in real-time for better UX
+                if (!Number.isNaN(n) && n >= 0) {
+                  handleBlur(e.target.value, "cornerRadius");
+                }
               }}
               onBlur={(e) => handleBlur(e.target.value, "cornerRadius")}
               className="w-full h-7 px-3 py-2 pl-8 bg-neutral-700/50 border border-neutral-700 rounded-md text-neutral-200 text-xs focus:outline-none hover:border-neutral-500 focus:border-neutral-500 transition-all duration-200"

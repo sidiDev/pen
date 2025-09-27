@@ -1,4 +1,4 @@
-import { JSX, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -36,7 +36,6 @@ interface ColorPickerHandlerProps {
   popoverAlign?: "start" | "center" | "end";
   popoverSideOffset?: number;
   popoverStyle?: React.CSSProperties;
-  alignOffset?: number;
 }
 
 const ColorPickerHandler = observer(
@@ -57,38 +56,43 @@ const ColorPickerHandler = observer(
     popoverAlign = "start",
     popoverSideOffset = 40,
     popoverStyle = {},
-    alignOffset = 0,
   }: ColorPickerHandlerProps) => {
     const [newColor, setNewColor] = useState(initialColor);
     const [color, setColor] = useState(initialColor);
     const [alpha, setAlpha] = useState(initialAlpha);
 
-    useEffect(() => {
-      if (color) {
-        const hsva = hexToHsva(color);
-        const rgba = hsvaToRgba(hsva);
-        const bgColor = `rgba(${Math.round(rgba.r)}, ${Math.round(
-          rgba.g
-        )}, ${Math.round(rgba.b)}, ${alpha})`;
-
-        onColorChange(color, bgColor, alpha);
-        setNewColor(color);
-      }
-    }, [color, alpha, onColorChange]);
-
+    // Update internal state when props change (when selecting different objects)
     useEffect(() => {
       if (initialColor) {
         setColor(initialColor);
+        setNewColor(initialColor);
         setAlpha(initialAlpha);
       }
     }, [initialColor, initialAlpha]);
 
     const handleColorChange = (newColor: string) => {
       setColor(newColor);
+      // Only trigger onColorChange when user actively changes the color
+      const hsva = hexToHsva(newColor);
+      const rgba = hsvaToRgba(hsva);
+      const bgColor = `rgba(${Math.round(rgba.r)}, ${Math.round(
+        rgba.g
+      )}, ${Math.round(rgba.b)}, ${alpha})`;
+
+      onColorChange(newColor, bgColor, alpha);
+      setNewColor(newColor);
     };
 
     const handleAlphaChange = (newAlpha: number) => {
       setAlpha(newAlpha);
+      // Only trigger onColorChange when user actively changes the alpha
+      const hsva = hexToHsva(color);
+      const rgba = hsvaToRgba(hsva);
+      const bgColor = `rgba(${Math.round(rgba.r)}, ${Math.round(
+        rgba.g
+      )}, ${Math.round(rgba.b)}, ${newAlpha})`;
+
+      onColorChange(color, bgColor, newAlpha);
     };
 
     const handleHexInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,8 +107,18 @@ const ColorPickerHandler = observer(
       const newValue = value.replace(/[^0-9A-Fa-f]/g, "").substring(0, 6);
 
       if (newValue.length === 6) {
-        setColor(`#${newValue}`);
-        setNewColor(`#${newValue}`);
+        const hexColor = `#${newValue}`;
+        setColor(hexColor);
+        setNewColor(hexColor);
+
+        // Trigger onColorChange when user changes hex input
+        const hsva = hexToHsva(hexColor);
+        const rgba = hsvaToRgba(hsva);
+        const bgColor = `rgba(${Math.round(rgba.r)}, ${Math.round(
+          rgba.g
+        )}, ${Math.round(rgba.b)}, ${alpha})`;
+
+        onColorChange(hexColor, bgColor, alpha);
       } else {
         setColor(initialColor);
         setNewColor(initialColor);
@@ -116,7 +130,17 @@ const ColorPickerHandler = observer(
         0,
         Math.min(100, parseInt(e.target.value) || 0)
       );
-      setAlpha(newValue / 100);
+      const newAlpha = newValue / 100;
+      setAlpha(newAlpha);
+
+      // Trigger onColorChange when user changes alpha input
+      const hsva = hexToHsva(color);
+      const rgba = hsvaToRgba(hsva);
+      const bgColor = `rgba(${Math.round(rgba.r)}, ${Math.round(
+        rgba.g
+      )}, ${Math.round(rgba.b)}, ${newAlpha})`;
+
+      onColorChange(color, bgColor, newAlpha);
     };
 
     return (

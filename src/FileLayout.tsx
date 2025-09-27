@@ -37,22 +37,25 @@ function FileLayout() {
 const Content = observer(function Content({ id }: { id: string }) {
   const user = useQuery(api.users.viewer);
   const mutateFile = useMutation(api.files.updateFile);
+  const [ifilled, setIfilled] = useState(false);
 
   const queryFile = useQuery(api.files.getFile, {
     fileId: id as any,
   });
 
   useEffect(() => {
-    if (queryFile) {
+    if (queryFile && !ifilled) {
       canvasStore.setUpdatePages(queryFile.pages);
+      document.body.style.backgroundColor =
+        queryFile.pages[0].backgroundColor.rgba;
+      // queryFile.pages[0].backgroundColor.rgba;
       console.log("queryFile", queryFile.pages);
+      setIfilled(true);
     }
   }, [queryFile?.pages]);
 
   useEffect(() => {
     const unsubscribe = canvasStore.onDebouncedUpdate((pages) => {
-      console.log("allPages", toJS(pages));
-
       mutateFile({
         fileId: id as any,
         file: { pages: canvasStore.allPages, updatedAt: Date.now() },

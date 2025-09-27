@@ -12,11 +12,11 @@ import ImageFill from "./ImageFill";
 export interface PanelSettings {
   alignment: string;
   lineHeight: number;
-  letterSpacing: number;
   fontSize: number;
   fontWeight: number;
   fontFamily: string;
   textAlign: string;
+  originY: string;
   fill: string | fabric.TFiller | null;
   opacity: number;
   left: number | "Mixed";
@@ -37,11 +37,11 @@ const InspectorPanel = observer(
     const initialPanelSettings: PanelSettings = {
       alignment: "start",
       lineHeight: 0,
-      letterSpacing: 0,
       fontSize: 0,
       fontWeight: 0,
       fontFamily: "",
       textAlign: "",
+      originY: "",
       fill: "",
       opacity: 0,
       left: "Mixed",
@@ -68,19 +68,34 @@ const InspectorPanel = observer(
       canvasStore.setCurrentPageBgColor(color, rgba, alpha);
     };
 
+    const selectedLayerKey = canvasStore.selectedLayers
+      .map((layer) => layer.id)
+      .join("|");
+
     useEffect(() => {
+      setPanelSettings(initialPanelSettings);
       if (canvasStore.selectedLayersCount == 1) {
         const selectedLayer = canvasStore.selectedLayers[0];
         const layer = canvas
           ?.getObjects()
           .find((obj) => (obj as any).id === selectedLayer.id);
         if (layer) {
+          console.log(layer.fill);
+
           setPanelSettings((data) => ({
             ...data,
             left: Math.round(layer.left),
             top: Math.round(layer.top),
-            width: Math.round(layer.width),
-            height: Math.round(layer.height),
+            width: Math.round((layer as any).getScaledWidth?.() ?? layer.width),
+            height: Math.round(
+              (layer as any).getScaledHeight?.() ?? layer.height
+            ),
+            borderRadius: {
+              r: (layer as any)?.borderRadius?.r,
+              l: (layer as any)?.borderRadius?.l,
+              t: (layer as any)?.borderRadius?.t,
+              b: (layer as any)?.borderRadius?.b,
+            },
             fill: layer.fill,
             opacity: layer.opacity * 100,
             fontSize: (layer as any).fontSize,
@@ -91,10 +106,34 @@ const InspectorPanel = observer(
             charSpacing: (layer as any).charSpacing,
           }));
         }
-      } else if (canvasStore.selectedLayersCount > 1) {
-        setPanelSettings(initialPanelSettings);
       }
-    }, [canvasStore.selectedLayersCount, canvasStore.selectedLayers]);
+    }, [canvasStore.selectedLayersCount, selectedLayerKey]);
+
+    // Update position and size live while moving selected object
+    useEffect(() => {
+      if (!canvas) return;
+
+      const handleObjectMoving = (e: any) => {
+        if (canvasStore.selectedLayersCount !== 1) return;
+        const target = e?.target as any;
+        if (!target) return;
+        const selectedId = canvasStore.selectedLayers[0]?.id;
+        if (selectedId && target.id === selectedId) {
+          setPanelSettings((data) => ({
+            ...data,
+            left: Math.round(target.left),
+            top: Math.round(target.top),
+            width: Math.round(target?.getScaledWidth?.() ?? target.width),
+            height: Math.round(target?.getScaledHeight?.() ?? target.height),
+          }));
+        }
+      };
+
+      canvas.on("object:moving", handleObjectMoving);
+      return () => {
+        canvas.off("object:moving", handleObjectMoving);
+      };
+    }, [canvas, canvasStore.selectedLayersCount, selectedLayerKey]);
 
     // useEffect(() => {
     //   if (canvasStore.hasSelectedLayers) {
@@ -173,19 +212,29 @@ const InspectorPanel = observer(
                 <FillPanel
                   fill={panelSettings.fill as string}
                   opacity={panelSettings.opacity as number}
+                  canvas={canvas}
+                  canvasStore={canvasStore}
                 />
               )}
               {isImage && (
                 <ImageFill
                   imageUrl={
-                    (
+                    ((
                       canvas
                         ?.getObjects()
                         .find(
                           (obj: any) =>
                             obj.id === canvasStore.selectedLayers[0].id
                         ) as any
-                    ).imageUrl as string
+                    ).imageUrl as string) ||
+                    ((
+                      canvas
+                        ?.getObjects()
+                        .find(
+                          (obj: any) =>
+                            obj.id === canvasStore.selectedLayers[0].id
+                        ) as any
+                    ).src as string)
                   }
                 />
               )}

@@ -48,20 +48,36 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
         }
       }
 
-      pages.forEach((page) => {
+      pages.forEach(async (page) => {
         canvas.setZoom(page.zoom.value);
         canvas.relativePan(
           new fabric.Point(page.zoom.delta.x, page.zoom.delta.y)
         );
-        canvas
+        await canvas
           .loadFromJSON({ version: "5.2.4", objects: page.objects })
           .then((canvas) => {
-            canvas
-              .getObjects()
-              .forEach((o: any) => applyDefaultObjectStyles(o));
-            canvas.requestRenderAll();
+            canvas.getObjects().forEach((o: any) => {
+              applyDefaultObjectStyles(o);
+              // Recreate clipPath for images if it exists
+              if (o.type === "image" && o.clipPath) {
+                const clipPathData = o.clipPath;
+                if (clipPathData.type === "rect") {
+                  const clipPath = new fabric.Rect({
+                    width: clipPathData.width || o.width / o.scaleX,
+                    height: clipPathData.height || o.height / o.scaleY,
+                    rx: clipPathData.rx || 0,
+                    ry: clipPathData.ry || 0,
+                    originX: clipPathData.originX || "center",
+                    originY: clipPathData.originY || "center",
+                  });
+                  o.set({ clipPath });
+                  o.dirty = true;
+                }
+              }
+            });
             canvas.set({ preserveObjectStacking: true });
           });
+        canvas.requestRenderAll();
       });
     },
     [canvasRef]
@@ -73,6 +89,36 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
   // Wheel pan/zoom and space-drag pan
   useEffect(() => {
     if (!canvas) return;
+
+    canvas.on("text:editing:entered", () => {
+      canvasStore.isEditingText = true;
+    });
+
+    canvas.on("text:editing:exited", () => {
+      canvasStore.isEditingText = false;
+    });
+
+    canvas.on("object:moving", (e) => {
+      canvas.getActiveObjects().forEach((obj) => {
+        if (canvas.getActiveObjects().length > 1) {
+          canvasStore.setUpdateObject({
+            id: (obj as any).id,
+            updates: {
+              left: obj.left + e.pointer.x,
+              top: obj.top + e.pointer.y,
+            },
+          });
+        } else {
+          canvasStore.setUpdateObject({
+            id: (obj as any).id,
+            updates: {
+              left: e.pointer.x,
+              top: e.pointer.y,
+            },
+          });
+        }
+      });
+    });
 
     const minZoom = 0.05;
     const maxZoom = 8;
@@ -190,6 +236,38 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
           canvas.requestRenderAll();
           e.preventDefault();
         }
+        // Select all layers
+        if (e.key.toLowerCase() === "a") {
+          // Avoid select-all while editing text
+          if (isEditingText) return;
+
+          const allSelectableObjects = canvas
+            .getObjects()
+            .filter(
+              (obj: any) =>
+                obj.selectable !== false && (obj as any).id !== "hover-element"
+            );
+
+          if (allSelectableObjects.length > 0) {
+            // Sync store selection
+            canvasStore.setSelectedLayers(
+              allSelectableObjects.map((obj: any) => ({
+                id: obj.id,
+                type: obj.itemType || obj.type,
+              }))
+            );
+
+            // Create an ActiveSelection on canvas
+            const selection = new fabric.ActiveSelection(
+              allSelectableObjects as any,
+              { canvas }
+            );
+            canvas.setActiveObject(selection);
+            canvas.requestRenderAll();
+          }
+
+          e.preventDefault();
+        }
       }
     };
 
@@ -271,7 +349,7 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       case "text":
         return "text";
       case "cursor":
-        return "default";
+        return "url('/cursor.svg'), default";
       case "frame":
         return "crosshair";
       case "rectangle":
@@ -352,10 +430,15 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       width: "auto",
       height: "auto",
       text: "",
-      fill: "#000",
+      fill: "#000000",
+      fontFamily: "Inter",
       fontSize: 12,
+      fontWeight: 400,
+      lineHeight: 1.16,
+      charSpacing: 0,
       opacity: 1,
       textAlign: "left",
+      originY: "top",
       widthMode: "fit",
       borderColor: "#3b82f6",
       id,
@@ -371,15 +454,21 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       left: textObject.left,
       top: textObject.top,
       textAlign: textObject.textAlign,
+      fontWeight: textObject.fontWeight,
+      fontFamily: textObject.fontFamily,
       ...cornerStyle,
       transparentCorners: false,
       borderColor: "#3b82f6",
       borderScaleFactor: 1.5,
       borderOpacityWhenMoving: 0,
       opacity: textObject.opacity,
+      lineHeight: textObject.lineHeight,
+      charSpacing: textObject.charSpacing,
       id,
       itemType: "i-text",
     });
+
+    console.log(text);
 
     text.set("editingBorderColor", "#3b82f6");
     canvas?.setActiveObject(text);
@@ -494,6 +583,15 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
         top: (pointer?.y as number) - img.height / 2,
         width: img.getScaledWidth(),
         height: img.getScaledHeight(),
+        clipPath: {
+          type: "rect",
+          width: img.width,
+          height: img.height,
+          rx: 0,
+          ry: 0,
+          originX: "center",
+          originY: "center",
+        },
         id,
       });
     });

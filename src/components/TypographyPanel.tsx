@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -19,6 +19,7 @@ import { IconLineHeight, IconletterSpacing } from "./icons";
 import { PanelSettings } from "./InspectorPanel";
 import * as fabric from "fabric";
 import canvasStore from "@/utils/CanvasStore";
+import fontWeight from "@/utils/fontWeight";
 
 interface TypographyPanelProps {
   className?: string;
@@ -42,26 +43,27 @@ export function TypographyPanel({
     fontWeight: number;
     fontSize: number;
     lineHeight: number;
-    letterSpacing: number;
+    charSpacing: number;
     textAlign: string;
   }>({
     fontFamily: panelSettings.fontFamily,
     fontWeight: panelSettings.fontWeight,
     fontSize: panelSettings.fontSize,
     lineHeight: panelSettings.lineHeight,
-    letterSpacing: panelSettings.letterSpacing,
+    charSpacing: panelSettings.charSpacing,
     textAlign: panelSettings.textAlign,
   });
 
   useEffect(() => {
     setTypographySettings(panelSettings);
-    console.log(panelSettings);
   }, [panelSettings]);
 
   function handleBlur(value: string, property: string) {
-    const isNumber = value.match(/^\d+$/) !== null;
+    const trimmed = value.trim();
+    const isNumber = trimmed !== "" && !Number.isNaN(Number(trimmed));
 
-    if (value === "" || (value.match(/^\d+$/) === null && isMultiSelect)) {
+    console.log({ [property]: value });
+    if (trimmed === "" || (!isNumber && isMultiSelect)) {
       setTypographySettings({
         ...typographySettings,
         [property]: "Mixed",
@@ -70,9 +72,9 @@ export function TypographyPanel({
         ...panelSettings,
         [property]: "Mixed",
       });
-    } else if (!isMultiSelect && value.match(/^\d+$/) !== null) {
+    } else if (!isMultiSelect && isNumber) {
       console.log("Blur", value);
-      const newValue = isNumber ? Number(value) : value;
+      const newValue = Number(trimmed);
       setTypographySettings({
         ...typographySettings,
         [property]: newValue,
@@ -90,8 +92,6 @@ export function TypographyPanel({
           });
         });
       } else {
-        console.log(selectedLayers[0]);
-
         const layer = canvas
           ?.getObjects()
           .find((obj) => (obj as any).id === selectedLayers[0]);
@@ -110,6 +110,25 @@ export function TypographyPanel({
     }
   }
 
+  function handleAlignmentChange(value: string) {
+    canvas?.getActiveObjects().forEach((obj) => {
+      obj.set("textAlign", value);
+      canvasStore.setUpdateObject({
+        id: (obj as any).id,
+        updates: { textAlign: value },
+      });
+    });
+    canvas?.renderAll();
+    setTypographySettings({
+      ...typographySettings,
+      textAlign: value,
+    });
+    setPanelSettings({
+      ...panelSettings,
+      textAlign: value,
+    });
+  }
+
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
@@ -118,16 +137,44 @@ export function TypographyPanel({
 
       {/* Font Family */}
       <div className="space-y-2">
-        <Select defaultValue="inter">
+        <Select
+          value={typographySettings.fontFamily}
+          onValueChange={(val) => {
+            canvas?.getActiveObjects().forEach((obj) => {
+              obj.set("fontFamily", val);
+              canvasStore.setUpdateObject({
+                id: (obj as any).id,
+                updates: {
+                  fontFamily: val,
+                },
+              });
+            });
+            canvas?.renderAll();
+            setTypographySettings({
+              ...typographySettings,
+              fontFamily: val,
+            });
+            setPanelSettings({
+              ...panelSettings,
+              fontFamily: val,
+            });
+          }}
+        >
           <SelectTrigger size="sm" className="w-full">
             <SelectValue placeholder="Font family" />
           </SelectTrigger>
           <SelectContent sideOffset={5}>
-            <SelectItem value="inter">Inter</SelectItem>
-            <SelectItem value="arial">Arial</SelectItem>
-            <SelectItem value="helvetica">Helvetica</SelectItem>
-            <SelectItem value="georgia">Georgia</SelectItem>
-            <SelectItem value="times">Times New Roman</SelectItem>
+            <SelectItem value="Inter">Inter</SelectItem>
+            <SelectItem value={`"Roboto Mono", monospace`}>
+              Roboto Mono
+            </SelectItem>
+            <SelectItem value={`"Noto Sans", sans-serif`}>Noto Sans</SelectItem>
+            <SelectItem value={`"Josefin Sans", sans-serif`}>
+              Josefin Sans
+            </SelectItem>
+            <SelectItem value={`"Merriweather", serif`}>
+              Merriweather
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -135,12 +182,51 @@ export function TypographyPanel({
       {/* Font Weight and Size */}
       <div className="flex gap-2">
         <div className="flex-1">
-          <Select defaultValue="regular">
+          <Select
+            value={
+              fontWeight.numeric[
+                typographySettings.fontWeight as keyof typeof fontWeight.numeric
+              ]
+            }
+            onValueChange={(val) => {
+              const currentFontWeight =
+                fontWeight[val as keyof typeof fontWeight];
+              const family = typographySettings.fontFamily || "Inter";
+              const needsQuotes = family.includes(" ");
+              const familyForCSS = needsQuotes ? `"${family}"` : family;
+
+              const loadPromise = (document as any).fonts?.load
+                ? (document as any).fonts
+                    .load(`${currentFontWeight} 12px ${familyForCSS}`)
+                    .catch(() => Promise.resolve())
+                : Promise.resolve();
+
+              Promise.resolve(loadPromise).finally(() => {
+                canvas?.getActiveObjects().forEach((obj) => {
+                  obj.set("fontWeight", currentFontWeight);
+                  canvasStore.setUpdateObject({
+                    id: (obj as any).id,
+                    updates: {
+                      fontWeight: currentFontWeight,
+                    },
+                  });
+                });
+                canvas?.renderAll();
+              });
+              setTypographySettings({
+                ...typographySettings,
+                fontWeight: currentFontWeight as number,
+              });
+              setPanelSettings({
+                ...panelSettings,
+                fontWeight: currentFontWeight as number,
+              });
+            }}
+          >
             <SelectTrigger size="sm" className="w-full">
               <SelectValue placeholder="Weight" className="w-full" />
             </SelectTrigger>
             <SelectContent sideOffset={5}>
-              <SelectItem value="light">Light</SelectItem>
               <SelectItem value="regular">Regular</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="semibold">Semibold</SelectItem>
@@ -183,6 +269,23 @@ export function TypographyPanel({
               type="number"
               value={typographySettings.lineHeight}
               className="w-full h-7 px-3 py-2 pl-8 bg-neutral-700/50 border border-neutral-700 rounded-md text-neutral-200 text-xs focus:outline-none hover:border-neutral-500 focus:border-neutral-500 transition-all duration-200"
+              onChange={(e) => {
+                setTypographySettings({
+                  ...typographySettings,
+                  lineHeight: Number(e.target.value),
+                });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleBlur(
+                    typographySettings.lineHeight.toString(),
+                    "lineHeight"
+                  );
+                }
+              }}
+              onBlur={(e) => {
+                handleBlur(e.target.value, "lineHeight");
+              }}
             />
             <IconLineHeight className="w-4 h-4 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
@@ -194,8 +297,25 @@ export function TypographyPanel({
           <div className="mt-0.5 relative">
             <input
               type="number"
-              value={typographySettings.letterSpacing}
+              value={typographySettings.charSpacing}
               className="w-full h-7 px-3 py-2 pl-8 bg-neutral-700/50 border border-neutral-700 rounded-md text-neutral-200 text-xs focus:outline-none hover:border-neutral-500 focus:border-neutral-500 transition-all duration-200"
+              onChange={(e) => {
+                setTypographySettings({
+                  ...typographySettings,
+                  charSpacing: Number(e.target.value),
+                });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleBlur(
+                    typographySettings.charSpacing.toString(),
+                    "charSpacing"
+                  );
+                }
+              }}
+              onBlur={(e) => {
+                handleBlur(e.target.value, "charSpacing");
+              }}
             />
             <IconletterSpacing className="w-4 h-4 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
@@ -209,23 +329,35 @@ export function TypographyPanel({
           {/* Horizontal Alignment */}
           <div className="flex-1 flex items-center bg-neutral-700/50 h-7 p-1 rounded-md">
             <Button
+              data-selected={typographySettings.textAlign === "left"}
+              onClick={() => {
+                handleAlignmentChange("left");
+              }}
               variant="outline"
               size="icon"
-              className="size-6 flex-1 bg-zinc-800 border-none shadow-none hover:bg-neutral-800 text-neutral-200 hover:text-neutral-100"
+              className="size-6 flex-1 data-[selected=true]:bg-zinc-800 bg-transparent border-none shadow-none hover:bg-neutral-800 text-neutral-200 hover:text-neutral-100"
             >
               <AlignLeft className="w-4 h-4" />
             </Button>
             <Button
+              data-selected={typographySettings.textAlign === "center"}
+              onClick={() => {
+                handleAlignmentChange("center");
+              }}
               variant="outline"
               size="icon"
-              className="size-6 flex-1 bg-transparent border-none shadow-none hover:bg-transparent text-neutral-200 hover:text-neutral-100"
+              className="size-6 flex-1 data-[selected=true]:bg-zinc-800 bg-transparent border-none shadow-none hover:bg-transparent text-neutral-200 hover:text-neutral-100"
             >
               <AlignCenter className="w-4 h-4" />
             </Button>
             <Button
+              data-selected={typographySettings.textAlign === "right"}
+              onClick={() => {
+                handleAlignmentChange("right");
+              }}
               variant="outline"
               size="icon"
-              className="size-6 flex-1 bg-transparent border-none shadow-none hover:bg-transparent text-neutral-200 hover:text-neutral-100"
+              className="size-6 flex-1 data-[selected=true]:bg-zinc-800 bg-transparent border-none shadow-none hover:bg-transparent text-neutral-200 hover:text-neutral-100"
             >
               <AlignRight className="w-4 h-4" />
             </Button>
@@ -234,6 +366,7 @@ export function TypographyPanel({
           {/* Vertical Alignment */}
           <div className="flex-1 flex gap-1 items-center bg-neutral-700/50 h-7 p-1 rounded-md">
             <Button
+              disabled
               variant="outline"
               size="icon"
               className="size-6 flex-1 bg-transparent border-none shadow-none hover:bg-transparent text-neutral-200 hover:text-neutral-100"
@@ -241,6 +374,7 @@ export function TypographyPanel({
               <ArrowUpToLine className="w-4 h-4" />
             </Button>
             <Button
+              disabled
               variant="outline"
               size="icon"
               className="size-6 flex-1 bg-transparent border-none shadow-none hover:bg-transparent text-neutral-200 hover:text-neutral-100"
@@ -248,6 +382,7 @@ export function TypographyPanel({
               <FoldVertical className="w-4 h-4" />
             </Button>
             <Button
+              disabled
               variant="outline"
               size="icon"
               className="size-6 flex-1 bg-transparent border-none shadow-none hover:bg-transparent text-neutral-200 hover:text-neutral-100"

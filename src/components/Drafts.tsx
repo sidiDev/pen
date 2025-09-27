@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { v4 as uuidv4 } from "uuid";
-import { useNavigate } from "react-router";
+import moment from "moment";
 
 function Drafts({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(false);
@@ -13,7 +13,6 @@ function Drafts({ userId }: { userId: string }) {
   const mutateFile = useMutation(api.files.createFile);
   const files = useQuery(api.files.getFiles);
 
-  const navigate = useNavigate();
   function createDraft() {
     setLoading(true);
     mutateFile({
@@ -42,7 +41,7 @@ function Drafts({ userId }: { userId: string }) {
       },
     }).then((fileId) => {
       console.log(fileId);
-      navigate(`/file/${fileId}`);
+      location.href = `/file/${fileId}`;
       setLoading(false);
     });
   }
@@ -60,7 +59,21 @@ function Drafts({ userId }: { userId: string }) {
           New Draft
         </Button>
       </div>
-      <div className="grid grid-cols-4 gap-4"></div>
+      <div className="grid grid-cols-4 gap-4 mt-6">
+        {files?.map((file) => (
+          <div
+            onClick={() => (location.href = `/file/${file.id}`)}
+            key={file.id}
+            className="text-xs"
+          >
+            <div className="h-48 bg-neutral-700/20 rounded-lg border border-neutral-600/30"></div>
+            <h2 className="text-neutral-300 mt-2">{file.name}</h2>
+            <p className="text-neutral-500 mt-1">
+              Edited {moment(file.updatedAt).fromNow()}
+            </p>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

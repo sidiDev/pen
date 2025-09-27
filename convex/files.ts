@@ -80,7 +80,10 @@ export const updateFile = mutation({
     }),
   },
   handler: async (ctx, args) => {
-    const fileId = await ctx.db.patch(args.fileId, { ...args.file });
+    const fileId = await ctx.db.patch(args.fileId, {
+      ...args.file,
+      updatedAt: Date.now(),
+    });
     return fileId;
   },
 });
@@ -105,6 +108,11 @@ export const getFiles = query({
       .query("files")
       .filter((q) => q.eq(q.field("userId"), userId))
       .collect();
-    return files;
+    return files.map((item) => ({
+      name: item.name,
+      id: item._id,
+      updatedAt: item.updatedAt,
+      createdAt: item.createdAt,
+    }));
   },
 });
