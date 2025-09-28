@@ -64,6 +64,11 @@ class CanvasStore {
     name: "" as string | null,
     url: null as string | null,
   };
+  pointer = null as null | {
+    start: { x: number; y: number };
+    end: { x: number; y: number };
+    objectId: string;
+  };
   private updateObjectTimeout: ReturnType<typeof setTimeout> | null = null;
   private updateListeners = new Set<(pages: IPage[]) => void>();
 
@@ -196,6 +201,16 @@ class CanvasStore {
   onDebouncedUpdate(listener: (pages: IPage[]) => void) {
     this.updateListeners.add(listener);
     return () => this.updateListeners.delete(listener);
+  }
+
+  setPointer(
+    pointer: {
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+      objectId: string;
+    } | null
+  ) {
+    this.pointer = pointer;
   }
 
   setHoveredLayer(layer: fabric.FabricObject) {

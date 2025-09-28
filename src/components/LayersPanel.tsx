@@ -180,6 +180,7 @@ const LayerItem = observer(
 const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
   const [isPagesExpanded, setIsPagesExpanded] = useState(true);
   const [isPageEditable, setIsPageEditable] = useState(false);
+  const [openImagePicker, setOpenImagePicker] = useState(false);
   const [keyDownName, setKeyDownName] = useState("");
   const navigate = useNavigate();
 
@@ -375,8 +376,17 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
                   Back to files
                 </MenubarItem>
                 <MenubarSeparator />
-                <MenubarItem>Place image</MenubarItem>
-                <MenubarItem>Copy link</MenubarItem>
+                <MenubarItem onClick={() => setOpenImagePicker(true)}>
+                  Place image
+                </MenubarItem>
+                <MenubarItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert("Link copied to clipboard");
+                  }}
+                >
+                  Copy link
+                </MenubarItem>
               </MenubarContent>
             </MenubarMenu>
           </Menubar>
@@ -384,6 +394,7 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
             {toolbarActions.map((action) => (
               <Tooltip key={action.id} content={action.id} side="right">
                 <Button
+                  disabled={action.id == "frame"}
                   onClick={() => {
                     canvasStore.setSelectedToolbarAction(action.id);
                   }}
@@ -398,6 +409,8 @@ const LayersPanel = observer(({ canvas }: { canvas: fabric.Canvas | null }) => {
               </Tooltip>
             ))}
             <ImagePicker
+              open={openImagePicker}
+              setOpen={setOpenImagePicker}
               selected={canvasStore.selectedToolbarAction}
               setImage={(image: { name: string; url: string | null }) => {
                 canvasStore.setSelectedToolbarAction("image");

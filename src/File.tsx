@@ -6,6 +6,7 @@ import { Canvas } from "@/components/Canvas";
 import * as fabric from "fabric";
 import { useRef, useCallback, useEffect, useState, RefObject } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { toJS } from "mobx";
 
 const File = observer(({ pages }: { pages: IPage[] }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -35,6 +36,11 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
           borderColor: "#3b82f6",
           borderScaleFactor: 1.5,
           borderOpacityWhenMoving: 0,
+          // Remove extra spacing between controls and object
+          cornerPadding: 0,
+          padding: 0,
+          // If no stroke is set, ensure strokeWidth doesn't inflate bounds
+          strokeWidth: obj.stroke ? obj.strokeWidth ?? 1 : 0,
         });
         obj.setControlsVisibility?.({
           mt: false,
@@ -363,6 +369,42 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     const cursor = currentCursor();
     canvas.setCursor(cursor);
 
+    if (canvasStore.pointer?.start) {
+      const pointer = canvas.getScenePoint(e.e);
+      const { x, y } = pointer;
+      console.log("mouse:move", e);
+      console.log("canvasStore.pointer.start", toJS(canvasStore.pointer.start));
+
+      const activeObject = canvas.getActiveObject();
+      if (activeObject && canvasStore.pointer) {
+        const startX = canvasStore.pointer.start.x;
+        const startY = canvasStore.pointer.start.y;
+
+        // Calculate width and height based on current mouse position
+        const width = Math.abs(x - startX);
+        const height = Math.abs(y - startY);
+
+        // Set the rectangle dimensions
+        activeObject.set({
+          width: width,
+          height: height,
+        });
+
+        // Ensure the rectangle stays at the start position
+        activeObject.set({
+          left: Math.min(startX, x),
+          top: Math.min(startY, y),
+        });
+
+        activeObject.setCoords();
+        canvas.requestRenderAll();
+      }
+      canvasStore.setPointer({
+        ...canvasStore.pointer!,
+        end: { x, y },
+      });
+    }
+
     if (
       canvasStore.selectedToolbarAction === "image" &&
       canvasStore.selectedImage
@@ -395,6 +437,50 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     if (imgEl) {
       imgEl.remove();
     }
+  });
+
+  canvas?.on("mouse:up", (e) => {
+    if (!canvasStore.pointer) return;
+    const { start, end, objectId } = canvasStore.pointer!;
+
+    const width = Math.abs(end.x - start.x);
+    const height = Math.abs(end.y - start.y);
+    const left = Math.min(start.x, end.x);
+    const top = Math.min(start.y, end.y);
+
+    if (start.x === end.x && start.y === end.y) {
+      canvas.getActiveObject()?.set({
+        width: 100,
+        height: 100,
+        left: start.x - 100 / 2,
+        top: start.y - 100 / 2,
+      });
+      canvas.getActiveObject()?.setCoords();
+      canvas.requestRenderAll();
+      canvasStore.setPointer(null);
+      canvasStore.setUpdateObject({
+        id: objectId,
+        updates: {
+          width: 100,
+          height: 100,
+          left: start.x - 100 / 2,
+          top: start.y - 100 / 2,
+        },
+      });
+      return;
+    }
+    canvasStore.setUpdateObject({
+      id: objectId,
+      updates: {
+        width: width,
+        height: height,
+        left: left,
+        top: top,
+      },
+    });
+    console.log("mouse:up", e);
+    console.log(canvasStore.pointer);
+    canvasStore.setPointer(null);
   });
 
   canvas?.on("mouse:down", (e) => {
@@ -453,11 +539,16 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       fontSize: textObject.fontSize,
       left: textObject.left,
       top: textObject.top,
+      originX: "left",
+      originY: "top",
       textAlign: textObject.textAlign,
       fontWeight: textObject.fontWeight,
       fontFamily: textObject.fontFamily,
       ...cornerStyle,
       transparentCorners: false,
+      cornerPadding: 0,
+      padding: 0,
+      strokeWidth: 0,
       borderColor: "#3b82f6",
       borderScaleFactor: 1.5,
       borderOpacityWhenMoving: 0,
@@ -487,7 +578,10 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
   }
 
   function addRectangle(e: any) {
+    if (canvasStore.pointer) return;
     const pointer = canvas?.getScenePoint(e.e);
+    console.log(pointer);
+
     const id = uuidv4();
 
     const rectangleObject = {
@@ -496,8 +590,8 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       resizeMode: "fit",
       left: pointer?.x,
       top: pointer?.y,
-      width: 100,
-      height: 100,
+      width: 0,
+      height: 0,
       fill: "#D9D9D9",
       opacity: 1,
       widthMode: "fit",
@@ -514,12 +608,19 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       top: rectangleObject.top,
       width: rectangleObject.width,
       height: rectangleObject.height,
+      originX: "left",
+      originY: "top",
       ...cornerStyle,
       transparentCorners: false,
+      cornerPadding: 0,
+      padding: 0,
+      strokeWidth: 0,
       borderScaleFactor: 1.5,
       borderOpacityWhenMoving: 0,
       opacity: rectangleObject.opacity,
       id,
+      strokeUniform: true,
+      noScaleCache: false,
       itemType: "rect",
     });
 
@@ -535,6 +636,11 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       mtr: false, // Hide middle-top-rotation (if exists)
     });
     canvas?.add(rectangle);
+    canvasStore.setPointer({
+      start: { x: pointer?.x as number, y: pointer?.y as number },
+      end: { x: pointer?.x as number, y: pointer?.y as number },
+      objectId: id,
+    });
     canvasStore.setSelectedToolbarAction("cursor");
   }
 
@@ -561,6 +667,9 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
         cornerColor: "#FFF",
         cornerStrokeColor: "#3b82f6",
         cornerSize: 8,
+        cornerPadding: 0,
+        padding: 0,
+        strokeWidth: 0,
         itemType: "image",
         clipPath,
         imageUrl,

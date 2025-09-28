@@ -50,11 +50,14 @@ type UnsplashSearchResponse = {
 export function ImagePicker({
   selected,
   setImage,
+  open,
+  setOpen,
 }: {
   selected: string;
   setImage: (image: { name: string; url: string | null }) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"upload" | "ai" | "unsplash">(
     "upload"
   );

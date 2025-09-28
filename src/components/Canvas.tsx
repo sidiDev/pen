@@ -81,14 +81,25 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       });
 
       canvas.on("mouse:over", (e) => {
-        if (e.target && CanvasStore.selectedLayers.length === 0) {
-          console.log("mouse:over", e.target);
-          CanvasStore.setHoveredLayer(e.target);
+        const target = e.target as any;
+        if (!target) return;
+        // ignore our synthetic hover overlay
+        if (target.id === "hover-element") return;
+        // Allow hovering other objects even when something is selected,
+        // but don't consider already-selected items as hover targets
+        if (!CanvasStore.isLayerSelected?.(target.id)) {
+          CanvasStore.setHoveredLayer(target);
+        } else {
+          CanvasStore.setHoveredLayer(null as any);
         }
       });
 
-      canvas.on("mouse:out", () => {
-        CanvasStore.setHoveredLayer(null as any);
+      canvas.on("mouse:out", (e) => {
+        const target = e.target as fabric.FabricObject | undefined;
+        // Clear hover when leaving the currently hovered object
+        if (!target || CanvasStore.hoveredLayer === target) {
+          CanvasStore.setHoveredLayer(null as any);
+        }
       });
 
       // canvas.setZoom(0.09);
