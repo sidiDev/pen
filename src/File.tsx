@@ -118,12 +118,19 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
           canvasStore.setUpdateObject({
             id: (obj as any).id,
             updates: {
-              left: e.pointer.x,
-              top: e.pointer.y,
+              left: obj.left,
+              top: obj.top,
             },
           });
         }
       });
+      const hoverElement = canvas
+        .getObjects()
+        .find((obj) => (obj as any).id === "hover-element");
+      if (hoverElement) {
+        canvas.remove(hoverElement);
+        canvas.requestRenderAll();
+      }
     });
 
     const minZoom = 0.05;
@@ -445,8 +452,6 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
 
     const width = Math.abs(end.x - start.x);
     const height = Math.abs(end.y - start.y);
-    const left = Math.min(start.x, end.x);
-    const top = Math.min(start.y, end.y);
 
     if (start.x === end.x && start.y === end.y) {
       canvas.getActiveObject()?.set({
@@ -467,6 +472,7 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
           top: start.y - 100 / 2,
         },
       });
+      canvasStore.setSelectedToolbarAction("cursor");
       return;
     }
     canvasStore.setUpdateObject({
@@ -474,13 +480,14 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       updates: {
         width: width,
         height: height,
-        left: left,
-        top: top,
+        left: canvas.getActiveObject()?.left,
+        top: canvas.getActiveObject()?.top,
       },
     });
     console.log("mouse:up", e);
     console.log(canvasStore.pointer);
     canvasStore.setPointer(null);
+    canvasStore.setSelectedToolbarAction("cursor");
   });
 
   canvas?.on("mouse:down", (e) => {
@@ -641,7 +648,6 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       end: { x: pointer?.x as number, y: pointer?.y as number },
       objectId: id,
     });
-    canvasStore.setSelectedToolbarAction("cursor");
   }
 
   function addImage(e: any) {

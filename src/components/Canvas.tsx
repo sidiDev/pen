@@ -138,7 +138,7 @@ export const Canvas = React.forwardRef<fabric.Canvas, CanvasProps>(
       fabric.ActiveSelection.ownDefaults.borderScaleFactor = 1.5;
       fabric.ActiveSelection.ownDefaults.cornerColor = "#FFF";
       fabric.ActiveSelection.ownDefaults.cornerStrokeColor = "#3b82f6";
-      fabric.ActiveSelection.ownDefaults.borderColor = "#3b82f6";
+      fabric.ActiveSelection.ownDefaults.borderColor = "#60a5fa";
       fabric.ActiveSelection.ownDefaults.cornerSize = 8;
 
       return canvas;
