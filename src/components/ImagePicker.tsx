@@ -145,7 +145,7 @@ export function ImagePicker({
       formData.append("filename", file.name);
       formData.append("type", file.type);
 
-      const response = await fetch("http://localhost:64374/upload-file", {
+      const response = await fetch("http://localhost:65214/upload-file", {
         method: "POST",
         body: formData,
       });

@@ -135,6 +135,43 @@ const InspectorPanel = observer(
       };
     }, [canvas, canvasStore.selectedLayersCount, selectedLayerKey]);
 
+    // Update position and size live while creating/resizing via pointer drag
+    useEffect(() => {
+      if (!canvas) return;
+
+      const updateFromTarget = (target: any) => {
+        if (canvasStore.selectedLayersCount !== 1) return;
+        if (!target) return;
+        const selectedId = canvasStore.selectedLayers[0]?.id;
+        if (selectedId && target.id === selectedId) {
+          setPanelSettings((data) => ({
+            ...data,
+            left: Math.round(target.left),
+            top: Math.round(target.top),
+            width: Math.round(target?.getScaledWidth?.() ?? target.width),
+            height: Math.round(target?.getScaledHeight?.() ?? target.height),
+          }));
+        }
+      };
+
+      const handleMouseMove = () => {
+        // During creation we manually set width/height; reflect that here
+        const active = canvas.getActiveObject() as any;
+        updateFromTarget(active);
+      };
+
+      const handleObjectScaling = (e: any) => {
+        updateFromTarget(e?.target as any);
+      };
+
+      canvas.on("mouse:move", handleMouseMove);
+      canvas.on("object:scaling", handleObjectScaling);
+      return () => {
+        canvas.off("mouse:move", handleMouseMove);
+        canvas.off("object:scaling", handleObjectScaling);
+      };
+    }, [canvas, canvasStore.selectedLayersCount, selectedLayerKey]);
+
     // useEffect(() => {
     //   if (canvasStore.hasSelectedLayers) {
     //     const ids = new Set(
@@ -186,7 +223,7 @@ const InspectorPanel = observer(
                 )}
                 isImage={isImage}
               />
-              {isImage && (
+              {
                 <AppearancePanel
                   panelSettings={panelSettings}
                   setPanelSettings={setPanelSettings}
@@ -196,7 +233,7 @@ const InspectorPanel = observer(
                   isMultiSelect={canvasStore.selectedLayersCount > 1}
                   canvas={canvas}
                 />
-              )}
+              }
               {!isImage && (
                 <TypographyPanel
                   panelSettings={panelSettings}

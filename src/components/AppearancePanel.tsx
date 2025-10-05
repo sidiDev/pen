@@ -108,6 +108,11 @@ export function AppearancePanel({
           layer.set({ clipPath });
           // Mark the object as dirty to force re-render
           layer.dirty = true;
+        } else {
+          layer.set({
+            rx: radius,
+            ry: radius,
+          });
         }
       }
       layer.setCoords?.();
@@ -126,6 +131,8 @@ export function AppearancePanel({
           id: layerId,
           updates: {
             borderRadius: { r: radius, l: radius, t: radius, b: radius },
+            rx: radius,
+            ry: radius,
           },
         });
       }

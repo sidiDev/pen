@@ -387,17 +387,14 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
         const startX = canvasStore.pointer.start.x;
         const startY = canvasStore.pointer.start.y;
 
-        // Calculate width and height based on current mouse position
         const width = Math.abs(x - startX);
         const height = Math.abs(y - startY);
 
-        // Set the rectangle dimensions
         activeObject.set({
           width: width,
           height: height,
         });
 
-        // Ensure the rectangle stays at the start position
         activeObject.set({
           left: Math.min(startX, x),
           top: Math.min(startY, y),
@@ -405,6 +402,38 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
 
         activeObject.setCoords();
         canvas.requestRenderAll();
+
+        // Show live size tooltip centered inside the drawn rectangle
+        const vpt = canvas.viewportTransform as number[];
+        const canvasRect = canvas.upperCanvasEl.getBoundingClientRect();
+        const objCenterX = (activeObject.left as number) + width / 2;
+        const screenX = objCenterX * vpt[0] + vpt[4];
+        const pageX = canvasRect.left + window.scrollX + screenX;
+        const pageY = (e.e as any).pageY;
+        const labelId = "size-tooltip";
+        let labelEl = document.getElementById(labelId) as HTMLDivElement | null;
+        const labelText = `${Math.round(width)} × ${Math.round(height)}`;
+        if (!labelEl) {
+          labelEl = document.createElement("div");
+          labelEl.id = labelId;
+          labelEl.style.position = "absolute";
+          labelEl.style.pointerEvents = "none";
+          labelEl.style.zIndex = "10000";
+          labelEl.style.background = "rgba(17,17,17,0.9)";
+          labelEl.style.color = "#fff";
+          labelEl.style.fontSize = "12px";
+          labelEl.style.fontFamily =
+            "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+          labelEl.style.padding = "4px 6px";
+          labelEl.style.borderRadius = "4px";
+          labelEl.style.boxShadow = "0 2px 6px rgba(0,0,0,0.4)";
+          labelEl.style.whiteSpace = "nowrap";
+          labelEl.style.transform = "translate(-50%, -50%)";
+          document.body.appendChild(labelEl);
+        }
+        labelEl.textContent = labelText;
+        labelEl.style.left = `${pageX}px`;
+        labelEl.style.top = `${pageY + 20}px`;
       }
       canvasStore.setPointer({
         ...canvasStore.pointer!,
@@ -427,7 +456,7 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
         imgEl.style.left = (e.e as any).pageX - 35 + "px";
         imgEl.style.top = (e.e as any).pageY - 35 + "px";
         imgEl.style.pointerEvents = "none";
-        imgEl.style.zIndex = "-1000";
+        imgEl.style.zIndex = "1000";
         document.body.appendChild(imgEl);
       } else {
         const imgEl = document.getElementById("uploaded-image");
@@ -444,9 +473,17 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
     if (imgEl) {
       imgEl.remove();
     }
+    const sizeEl = document.getElementById("size-tooltip");
+    if (sizeEl) {
+      sizeEl.remove();
+    }
   });
 
   canvas?.on("mouse:up", (e) => {
+    const sizeEl = document.getElementById("size-tooltip");
+    if (sizeEl) {
+      sizeEl.remove();
+    }
     if (!canvasStore.pointer) return;
     const { start, end, objectId } = canvasStore.pointer!;
 
@@ -626,6 +663,8 @@ const File = observer(({ pages }: { pages: IPage[] }) => {
       borderOpacityWhenMoving: 0,
       opacity: rectangleObject.opacity,
       id,
+      rx: 0,
+      ry: 0,
       strokeUniform: true,
       noScaleCache: false,
       itemType: "rect",
