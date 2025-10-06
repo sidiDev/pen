@@ -1,8 +1,6 @@
 # Pen — Design tool built using React
 
-<video controls>
-  <source src="https://pub-6b4df72604794d4d8fa718147c3e2837.r2.dev/design-tool.mp4" type="video/mp4">
-</video>
+![Watch the demo](https://pub-6b4df72604794d4d8fa718147c3e2837.r2.dev/design-tool.mp4)
 
 This app uses:
 
