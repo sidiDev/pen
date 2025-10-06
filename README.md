@@ -2,6 +2,8 @@
 
 [![Watch the demo](https://pub-6b4df72604794d4d8fa718147c3e2837.r2.dev/design-image-preview.png)](https://pub-6b4df72604794d4d8fa718147c3e2837.r2.dev/design-tool.mp4)
 
+[Watch the demo](https://pub-6b4df72604794d4d8fa718147c3e2837.r2.dev/design-tool.mp4)
+
 This app uses:
 
 - React + Vite for the frontend
